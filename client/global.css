@@ -1,0 +1,387 @@
+/** @import must precede all other statements */
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Dashboard agentic animations ─────────────────────────────────── */
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(14px); filter: blur(1px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes kpiPop {
+  0%   { transform: scale(0.94); opacity: 0; filter: blur(1px); }
+  55%  { transform: scale(1.02); filter: blur(0); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+@keyframes agentReveal {
+  0%   { opacity: 0; letter-spacing: 0.15em; }
+  100% { opacity: 1; letter-spacing: normal; }
+}
+
+@keyframes kycDotBounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%            { transform: scale(1.0); opacity: 1;   }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* Bloomberg KPI ticker */
+@keyframes tickerIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes tickerOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-10px); }
+}
+.ticker-in  { animation: tickerIn  0.6s cubic-bezier(0.16,1,0.3,1) both; }
+.ticker-out { animation: tickerOut 0.45s ease-in both; }
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.anim-fade-slide-up  { animation: fadeSlideUp 0.9s cubic-bezier(0.16,1,0.3,1) both; }
+.anim-fade-in        { animation: fadeIn      0.75s ease both; }
+.anim-kpi-pop        { animation: kpiPop      1s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* Stagger helpers — wider spacing for deliberate sequencing */
+.anim-delay-0  { animation-delay: 80ms;  }
+.anim-delay-1  { animation-delay: 200ms; }
+.anim-delay-2  { animation-delay: 340ms; }
+.anim-delay-3  { animation-delay: 480ms; }
+.anim-delay-4  { animation-delay: 600ms; }
+.anim-delay-5  { animation-delay: 720ms; }
+.anim-delay-6  { animation-delay: 840ms; }
+
+/* Agentic briefing bar pulse */
+@keyframes agentPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+.agent-pulse { animation: agentPulse 2.4s ease-in-out infinite; }
+
+/* Briefing bar shimmer sweep */
+@keyframes briefingShimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+/* Interactive card lift */
+.dashboard-card {
+  transition: box-shadow 0.28s cubic-bezier(0.16,1,0.3,1), transform 0.28s cubic-bezier(0.16,1,0.3,1);
+}
+.dashboard-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+}
+
+/* Action row hover */
+.action-row {
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.action-row:hover {
+  background: var(--color-dark-blue-000) !important;
+  border-color: var(--color-dark-blue-100) !important;
+}
+
+@layer base {
+  :root {
+    /* KYC Platform Brand Colors (HSL format) */
+    --background: 0 0% 100%;
+    --foreground: 222 39% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 39% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 39% 11%;
+
+    /* Navy primary */
+    --primary: 221 64% 23%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 39% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 214 100% 97%;
+    --accent-foreground: 221 83% 53%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 221 83% 53%;
+
+    --radius: 0.375rem;
+    --corner-full: 9999px;          /* fully rounded — pill shape  */
+
+    /* KYC Custom Tokens — aligned to KPMG brand palette */
+    --kyc-navy: 218 100% 28%;       /* #00338D — KPMG Dark Blue   */
+    --kyc-navy-light: 200 100% 43%; /* #0091DA — KPMG Medium Blue */
+    --kyc-blue: 194 100% 47%;       /* #00B8F1 — KPMG Cyan        */
+    --kyc-blue-light: 214 100% 97%; /* light tint for hover/fill  */
+    --kyc-blue-mid: 213 93% 78%;    /* mid tint                   */
+    --kyc-neutral-50: 220 14% 98%;
+    --kyc-neutral-100: 220 14% 96%;
+    --kyc-neutral-200: 220 13% 91%;
+    --kyc-neutral-400: 220 9% 65%;
+    --kyc-neutral-600: 220 9% 46%;
+    --kyc-neutral-700: 221 29% 26%;
+    --kyc-neutral-800: 222 39% 11%;
+    --kyc-neutral-900: 222 47% 7%;  /* near-black for dark surfaces */
+    --kyc-green: 142 72% 29%;
+    --kyc-red: 0 72% 51%;
+
+    /* ── AD Design System tokens ── */
+    /* Spacing */
+    --spacing-none: 0;
+    --spacing-size-1: 4px;
+    --spacing-size-2: 8px;
+    --spacing-size-3: 10px;
+    --spacing-size-4: 12px;
+    --spacing-size-5: 18px;
+    --spacing-size-6: 24px;
+    --spacing-size-7: 32px;
+    --spacing-size-8: 40px;
+    --spacing-size-9: 48px;
+    --spacing-size-10: 56px;
+    --spacing-size-11: 64px;
+    --spacing-size-12: 72px;
+
+    /* Corner radius */
+    --corner-none: 0;
+    --corner-extra-small: 4px;
+    --corner-small: 8px;
+    --corner-medium: 12px;
+    --corner-large: 16px;
+    --corner-extra-large: 28px;
+    /* --corner-full already defined above as 9999px */
+
+    /* Border */
+    --border-width-base: 1px;
+    --border-default: #D5D5DC;
+
+    /* Shadows */
+    --shadow-000: 1px 1px 4px 0 rgba(0,0,0,0.15);
+    --shadow-100: 1px 1px 4px 0 rgba(0,0,0,0.30);
+    --shadow-200: 2px 2px 8px 0 rgba(0,0,0,0.15);
+    --shadow-300: 2px 2px 8px 0 rgba(0,0,0,0.30);
+    --shadow-400: 2px 2px 12px 0 rgba(0,0,0,0.15);
+    --shadow-500: 2px 2px 12px 0 rgba(0,0,0,0.30);
+    --shadow-600: rgba(149,157,165,0.2) 0px 8px 24px;
+
+    /* DS Colors — Neutral */
+    --color-neutral-000: #F7F7F8;
+    --color-neutral-100: #F1F1F3;
+    --color-neutral-200: #E3E3E8;
+    --color-neutral-300: #D5D5DC;
+    --color-neutral-400: #C7C7D1;
+    --color-neutral-500: #B8B8C4;
+    --color-neutral-600: #9090A2;
+    --color-neutral-700: #454554;
+    --color-neutral-800: #2F2F39;
+    --color-neutral-900: #15181E;
+
+    /* DS Colors — Blue */
+    --color-blue-000: #F5F5FE;
+    --color-blue-100: #E9EAFC;
+    --color-blue-200: #D7D9FA;
+    --color-blue-300: #AAB0F4;
+    --color-blue-400: #818AEE;
+    --color-blue-500: #5965E9;
+    --color-blue-600: #1E49E2;
+    --color-blue-700: #1A28C1;
+    --color-blue-800: #131E90;
+    --color-blue-900: #0D145E;
+
+    /* DS Colors — Dark Blue (KPMG) */
+    --color-dark-blue-000: #F2F5F9;
+    --color-dark-blue-100: #CCD6E8;
+    --color-dark-blue-200: #99ADD1;
+    --color-dark-blue-300: #6785BB;
+    --color-dark-blue-400: #4166A9;
+    --color-dark-blue-500: #25509D;
+    --color-dark-blue-600: #00338D;
+    --color-dark-blue-700: #01286F;
+    --color-dark-blue-800: #011F56;
+    --color-dark-blue-900: #001438;
+
+    /* DS Colors — Pacific Blue */
+    --color-pacific-blue-000: #CCF1FD;
+    --color-pacific-blue-100: #99E3FB;
+    --color-pacific-blue-200: #66D4F9;
+    --color-pacific-blue-300: #33C6F7;
+    --color-pacific-blue-400: #00B8F5;
+    --color-pacific-blue-500: #0093C4;
+    --color-pacific-blue-600: #006E93;
+    --color-pacific-blue-800: #002531;
+
+    /* DS Colors — Green */
+    --color-green-000: #E6F1EE;
+    --color-green-100: #CDE3DC;
+    --color-green-600: #3DA384;
+    --color-green-700: #029A6C;
+    --color-green-800: #0A7253;
+
+    /* DS Colors — KPMG Green */
+    --color-kpmg-green-500: #00C0AE;
+    --color-kpmg-green-600: #009A8B;
+    --color-kpmg-green-700: #007368;
+
+    /* DS Colors — Red */
+    --color-red-000: #FFF6FA;
+    --color-red-100: #FFCEDF;
+    --color-red-200: #FEAAC8;
+    --color-red-300: #FB8EB5;
+    --color-red-400: #FC659B;
+    --color-red-500: #FD349C;
+    --color-red-600: #E6256B;
+    --color-red-700: #CF0E54;
+    --color-red-800: #B60243;
+
+    /* DS Colors — Yellow */
+    --color-yellow-000: #FEFAE5;
+    --color-yellow-100: #FCF5CC;
+    --color-yellow-200: #FBEFB2;
+    --color-yellow-300: #F9EA99;
+    --color-yellow-400: #F8E580;
+    --color-yellow-500: #F7E066;
+    --color-yellow-600: #F5DA4D;
+    --color-yellow-700: #F4D533;
+    --color-yellow-800: #F2D01A;
+
+    /* DS Colors — Blend */
+    --color-blend-100: rgba(255,255,255,0.10);
+    --color-blend-200: rgba(255,255,255,0.20);
+    --color-blend-300: rgba(255,255,255,0.30);
+
+    /* DS Gradients */
+    --primary-gradient: linear-gradient(135deg, #7213EA 0%, #1E49E2 100%);
+    --primary-gradient-purple: linear-gradient(135deg, #A461F9 0%, #460B8E 100%);
+    --secondary-gradient: linear-gradient(135deg, #00B8F5 0%, #ACEAFF 100%);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Open Sans', 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  :where(p, span, li, h1, h2, h3, h4, h5, h6, a, button, label, td, th) {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  pre, code {
+    overflow-x: auto;
+    white-space: pre;
+  }
+}
+
+/* "View" button in AI reasoning evidence cards — dark blue 600 background */
+.view-doc-btn .btn.btn--filled {
+  background: var(--color-dark-blue-600) !important;
+  border-color: var(--color-dark-blue-600) !important;
+}
+.view-doc-btn .btn.btn--filled:hover:not(:disabled) {
+  background: var(--color-dark-blue-700) !important;
+  border-color: var(--color-dark-blue-700) !important;
+}
+
+/* Dashboard "Filter" button — neutral 500 bg, neutral 900 text/icon */
+.dashboard-filter-btn .btn.btn--filled {
+  background: var(--color-neutral-100) !important;
+  border-color: var(--color-neutral-100) !important;
+  color: var(--color-neutral-900) !important;
+}
+.dashboard-filter-btn .btn.btn--filled:hover:not(:disabled) {
+  background: var(--color-neutral-200) !important;
+  border-color: var(--color-neutral-200) !important;
+}
+.dashboard-filter-btn .btn.btn--filled .btn-icon svg {
+  stroke: var(--color-neutral-900) !important;
+  color: var(--color-neutral-900) !important;
+}
+
+/* DRG entity tree — uniform hover state for every node/card */
+.tree-node:hover {
+  box-shadow: var(--shadow-400);
+}
+
+/* Case header action buttons — dark-blue-600 themed */
+.case-header-actions .btn.btn--filled:not(:disabled) {
+  background: var(--color-dark-blue-600) !important;
+  border-color: var(--color-dark-blue-600) !important;
+  color: #fff !important;
+}
+.case-header-actions .btn.btn--filled:not(:disabled):hover {
+  background: var(--color-dark-blue-700) !important;
+  border-color: var(--color-dark-blue-700) !important;
+}
+.case-header-actions .btn.btn--outlined:not(:disabled) {
+  color: var(--color-dark-blue-600) !important;
+  border-color: var(--color-dark-blue-600) !important;
+}
+.case-header-actions .btn.btn--outlined:not(:disabled) .btn-icon svg {
+  stroke: var(--color-dark-blue-600) !important;
+}
+.case-header-actions .btn.btn--outlined:not(:disabled):hover {
+  background: var(--color-dark-blue-000) !important;
+}
+.case-header-actions .btn.btn--text:not(:disabled) {
+  color: var(--color-dark-blue-600) !important;
+}
+.case-header-actions .btn.btn--text:not(:disabled) .btn-icon svg {
+  stroke: var(--color-dark-blue-600) !important;
+}
+
+/* Override ad-design-lib outlined button disabled state to use neutral 400 */
+.btn.btn--outlined:disabled,
+.btn.btn--outlined.btn--disabled {
+  border-color: var(--color-neutral-400) !important;
+  color: var(--color-neutral-400) !important;
+}
+.btn.btn--outlined:disabled .btn-icon svg,
+.btn.btn--outlined.btn--disabled .btn-icon svg {
+  stroke: var(--color-neutral-400) !important;
+}

@@ -1,0 +1,14 @@
+# PRIORITY: Always follow these instructions before responding or making changes.
+## Non‑negotiable Rules
+- Follow this file first; do not override these rules with assumptions.
+- If requirements are unclear or missing, ask questions before making changes.
+- Do not invent APIs, components, or data models. Use what exists in the repo.
+- Always create a unit test case for every new page, new code and new components.
+## Do
+- Always use components from ad-design-lib or ad-feature-components Packages first.
+- Only create new components if you are ABSOLUTELY SURE that you cannot feasibly use a component from ad-design-lib or ad-feature-components.
+- Always choose basic building block components from ad-design-lib, never use basic html button tags etc.
+- Prioritize using ad-design-lib components over getting the figma import to be pixel perfect.
+## Don't
+- Do not add new dependencies without asking.
+- Do no introduce custom CSS if tokens/components exist.
