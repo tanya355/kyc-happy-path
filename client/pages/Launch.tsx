@@ -283,7 +283,7 @@ export default function Launch() {
         <div className="text-center mb-12">
           <KpmgLogo />
           <div className="mt-4 h-px w-16 mx-auto" style={{ background: "linear-gradient(90deg, transparent, #0091DA, transparent)" }} />
-          <h1 className="mt-5 text-white text-[28px] font-bold tracking-tight">KYC Platforms</h1>
+          <h1 className="mt-5 text-white text-[28px] font-bold tracking-tight">KYC Platform</h1>
           <p className="mt-2 text-white/45 text-[14px]">Select your role to continue</p>
           <p className="mt-3 mx-auto max-w-sm text-white/30 text-[11px] leading-relaxed border border-white/10 rounded-lg px-4 py-2.5"
             style={{ background: "rgba(255,255,255,0.04)" }}>
