@@ -1029,49 +1029,6 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
 
             {/* Actions */}
             <div className="shrink-0 self-center flex items-center gap-3">
-              {/* Secondary actions */}
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="text"
-                  size="small"
-                  label="Cancel"
-                  icon={<XCircle size={13} />}
-                  onClick={() => navigate("/dashboard")}
-                />
-                {onOpenAuditLog && (
-                  <Button
-                    variant="text"
-                    size="small"
-                    label="Audit Log"
-                    icon={<ClipboardList size={13} />}
-                    onClick={onOpenAuditLog}
-                  />
-                )}
-                {onOpenReachOuts && (
-                  <div className="relative inline-flex">
-                    <Button
-                      variant="text"
-                      size="small"
-                      label="Reach Outs"
-                      icon={<Mail size={12} aria-hidden />}
-                      onClick={onOpenReachOuts}
-                      aria-label={`Reach Outs — ${reachOutCount} pending`}
-                    />
-                    {reachOutCount > 0 && (
-                      <span
-                        className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold pointer-events-none"
-                        style={{ background: "var(--color-dark-blue-600)", color: "#fff" }}
-                      >
-                        {reachOutCount}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="w-px h-5 bg-kyc-neutral-200 shrink-0" aria-hidden="true" />
-
               {/* Primary actions */}
               <div className="flex items-center gap-2 case-header-actions">
                 <Button
@@ -1101,7 +1058,50 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
                   disabled={resolvedCount === 0 && !agentReviewComplete}
                   onClick={() => setShowConfirm(true)}
                 />
-              </div> {/* end primary actions */}
+              </div>
+
+              {/* Divider */}
+              <div className="w-px h-5 bg-kyc-neutral-200 shrink-0" aria-hidden="true" />
+
+              {/* Secondary actions */}
+              <div className="flex items-center gap-1">
+                {onOpenReachOuts && (
+                  <div className="relative inline-flex">
+                    <Button
+                      variant="text"
+                      size="small"
+                      label="Reach Outs"
+                      icon={<Mail size={12} aria-hidden />}
+                      onClick={onOpenReachOuts}
+                      aria-label={`Reach Outs — ${reachOutCount} pending`}
+                    />
+                    {reachOutCount > 0 && (
+                      <span
+                        className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold pointer-events-none"
+                        style={{ background: "var(--color-dark-blue-600)", color: "#fff" }}
+                      >
+                        {reachOutCount}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {onOpenAuditLog && (
+                  <Button
+                    variant="text"
+                    size="small"
+                    label="Audit Log"
+                    icon={<ClipboardList size={13} />}
+                    onClick={onOpenAuditLog}
+                  />
+                )}
+                <Button
+                  variant="text"
+                  size="small"
+                  label="Cancel"
+                  icon={<XCircle size={13} />}
+                  onClick={() => navigate("/dashboard")}
+                />
+              </div>
             </div> {/* end actions wrapper */}
 
           </div>
