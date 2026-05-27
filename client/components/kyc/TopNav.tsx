@@ -95,18 +95,13 @@ export function TopNav() {
         </div>
       </nav>
 
-      {/* Spacer to push page content below the fixed banner */}
-      <div style={{ height: 40 }} aria-hidden />
-
       {/* ── Recommendation Banner ─────────────────────────────────── */}
       <div
-        className="fixed left-0 right-0 flex items-center px-5 gap-3"
+        className="w-full flex items-center px-5 gap-3 shrink-0"
         style={{
-          top: 72,
           height: 40,
-          zIndex: 98,
-          background: "var(--color-dark-blue-000, #eef2fb)",
-          borderBottom: "1px solid var(--color-dark-blue-100, #c7d4f0)",
+          background: "white",
+          borderBottom: "1px solid var(--color-neutral-200, #e5e7eb)",
         }}
       >
         {/* Label chip */}
