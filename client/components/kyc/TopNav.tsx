@@ -157,21 +157,16 @@ export function TopNav() {
 
           {/* Run Agent dropdown */}
           <div ref={agentDropRef} className="relative">
-            <button
+            <Button
+              variant="outlined"
+              size="small"
+              label="Run Agent"
+              showIconTrailing
+              icon={<ChevronDown size={11} aria-hidden style={{ transition: "transform 0.15s", transform: agentDropOpen ? "rotate(180deg)" : "none" }} />}
               onClick={() => setAgentDropOpen(o => !o)}
-              className="flex items-center gap-1 text-[11px] font-medium px-3 rounded transition-colors"
-              style={{
-                height: 28,
-                border: "1px solid var(--color-dark-blue-300, #6b90d4)",
-                color: "var(--color-dark-blue-700, #14307a)",
-                background: "white",
-              }}
               aria-expanded={agentDropOpen}
               aria-haspopup="true"
-            >
-              Run Agent
-              <ChevronDown size={11} aria-hidden style={{ transition: "transform 0.15s", transform: agentDropOpen ? "rotate(180deg)" : "none" }} />
-            </button>
+            />
 
             {agentDropOpen && (
               <div
