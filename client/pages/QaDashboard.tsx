@@ -7,7 +7,7 @@ import {
   AlertTriangle, ExternalLink, MessageCircle, Plus, Info, Globe,
   Shield, Users2, Zap, Flag, TrendingDown, ClipboardCheck, Lightbulb, Briefcase, Loader2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { TopNav } from "@/components/kyc/TopNav";
 import { Button } from "@kpmg-us/ad-design-lib";
 import {
