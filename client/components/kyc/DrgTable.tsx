@@ -168,7 +168,7 @@ export function DrgTable({ selected = new Set<string>(), onSelectionChange = () 
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["blackrock"]));
   const [sortKey, setSortKey] = useState<SortKey>("dueDate");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const setSelected = onSelectionChange;
 
   const activeFilters = filters ?? { entity: "", dueDateFrom: "", dueDateTo: "", jurisdictions: [], priorities: [], riskRatings: [] };
