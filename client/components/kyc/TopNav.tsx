@@ -7,7 +7,6 @@ const tabs = [
   { label: "Dashboard",       path: "/analyst-dashboard", match: ["/analyst-dashboard"]           },
   { label: "Work Queue",      path: "/dashboard",         match: ["/dashboard", "/case", "/qa-work-hub", "/qa-dashboard"] },
   { label: "Reports",         path: "/reports",           match: ["/reports"]                     },
-  { label: "Evidence Locker", path: "/evidence-locker",   match: ["/evidence-locker"]             },
 ];
 
 export function TopNav() {
