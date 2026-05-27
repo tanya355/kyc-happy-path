@@ -538,55 +538,6 @@ export default function AnalystDashboard() {
               </div>
             </div>
 
-            {/* ── AI Operational Briefing ── */}
-            <div
-              className="flex items-center justify-between gap-6 px-4 py-4 rounded-md anim-fade-slide-up anim-delay-1 overflow-hidden"
-              style={{
-                background: "var(--color-neutral-000)",
-                border: "1px solid var(--color-neutral-200)",
-                position: "relative",
-              }}
-            >
-              {/* Left accent rule */}
-              <div
-                className="absolute left-0 top-0 bottom-0 rounded-l-md"
-                style={{ width: 3, background: "var(--color-dark-blue-600)", opacity: 0.18 }}
-              />
-
-              {/* Left: agent identity + live cycling status */}
-              <div className="flex items-center gap-3 min-w-0">
-                {/* Pulsing live dot */}
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span
-                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-40"
-                    style={{ background: "var(--color-dark-blue-400)" }}
-                  />
-                  <span
-                    className="relative inline-flex rounded-full h-2 w-2"
-                  />
-                </span>
-                <span className="text-[9px] font-bold uppercase tracking-widest text-ds-neutral-800 shrink-0">KYC Ops Agent</span>
-                <div className="w-px h-3 bg-ds-neutral-200 shrink-0" />
-                {/* Cycling status */}
-                <span
-                  className="text-[10px] text-ds-dark-blue-600 italic transition-opacity duration-400"
-                  style={{ opacity: statusVisible ? 1 : 0 }}
-                >
-                  {AGENT_STATUSES[agentStatusIdx]}
-                </span>
-              </div>
-
-              {/* Right: metadata */}
-              <div className="flex items-center gap-2.5 text-[10px] text-ds-neutral-700 shrink-0">
-                <span>Model <span className="font-semibold text-ds-neutral-900">v2.4.1</span></span>
-                <span className="text-ds-neutral-600">·</span>
-                <span>Confidence <span className="font-semibold text-ds-neutral-900">94%</span></span>
-                <span className="text-ds-neutral-600">·</span>
-                <span>Synced <span className="font-semibold text-ds-neutral-900">2m ago</span></span>
-                <span className="text-ds-neutral-600">·</span>
-                <span>119 cases reviewed</span>
-              </div>
-            </div>
 
 
             {/* ── Top KPI cards — separate ── */}
