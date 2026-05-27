@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { User, Settings, LogOut } from "lucide-react";
-import { FloatingTopAppBar } from "@kpmg-us/ad-design-lib";
+import { User, Settings, LogOut, Zap, ChevronDown, Check } from "lucide-react";
+import { FloatingTopAppBar, Button } from "@kpmg-us/ad-design-lib";
 
 const tabs = [
   { label: "Dashboard",       path: "/analyst-dashboard", match: ["/analyst-dashboard"]           },
@@ -9,22 +9,39 @@ const tabs = [
   { label: "Reports",         path: "/reports",           match: ["/reports"]                     },
 ];
 
+const BANNER_AGENTS = [
+  { id: "bulk-triage",     label: "Bulk Triage Selected Cases",   desc: "Best for high-risk DRG entities in queue" },
+  { id: "doc-extraction",  label: "Document Extraction Agent",     desc: "Extract KYC fields from uploaded documents" },
+  { id: "sanctions-check", label: "Sanctions Screening Agent",     desc: "Cross-check entities against global watchlists" },
+];
+
 export function TopNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen]           = useState(false);
+  const [agentDropOpen, setAgentDropOpen] = useState(false);
+  const [ranAgent, setRanAgent]           = useState(false);
+  const menuRef      = useRef<HTMLDivElement>(null);
+  const agentDropRef = useRef<HTMLDivElement>(null);
+  const [activeAgent, setActiveAgent]     = useState(BANNER_AGENTS[0]);
 
   useEffect(() => {
     if (!menuOpen) return;
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!agentDropOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (agentDropRef.current && !agentDropRef.current.contains(e.target as Node)) setAgentDropOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [agentDropOpen]);
 
   const isQa = sessionStorage.getItem("persona") === "qa";
 
@@ -77,6 +94,117 @@ export function TopNav() {
           })}
         </div>
       </nav>
+
+      {/* Spacer to push page content below the fixed banner */}
+      <div style={{ height: 40 }} aria-hidden />
+
+      {/* ── Recommendation Banner ─────────────────────────────────── */}
+      <div
+        className="fixed left-0 right-0 flex items-center px-5 gap-3"
+        style={{
+          top: 72,
+          height: 40,
+          zIndex: 98,
+          background: "var(--color-dark-blue-000, #eef2fb)",
+          borderBottom: "1px solid var(--color-dark-blue-100, #c7d4f0)",
+        }}
+      >
+        {/* Label chip */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Zap size={12} style={{ color: "var(--color-dark-blue-600, #1a3f8f)" }} aria-hidden />
+          <span
+            className="text-[9px] font-bold uppercase tracking-widest"
+            style={{ color: "var(--color-dark-blue-600, #1a3f8f)", letterSpacing: "0.13em" }}
+          >
+            Recommended Agents
+          </span>
+        </div>
+
+        <div
+          className="w-px h-4 shrink-0"
+          style={{ background: "var(--color-dark-blue-200, #a2b8e0)" }}
+          aria-hidden
+        />
+
+        {/* Recommendation content */}
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <span
+            className="text-[12px] font-semibold truncate"
+            style={{ color: "var(--color-neutral-900, #0d1117)" }}
+          >
+            {activeAgent.label}
+          </span>
+          <span
+            className="text-[11px] truncate hidden sm:inline"
+            style={{ color: "var(--color-neutral-500, #6b7280)" }}
+          >
+            · {activeAgent.desc}
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          {ranAgent ? (
+            <span
+              className="flex items-center gap-1 text-[11px] font-medium px-3 py-1 rounded"
+              style={{ color: "var(--color-green-700, #15803d)", background: "var(--color-green-000, #f0fdf4)" }}
+            >
+              <Check size={11} aria-hidden /> Agent queued
+            </span>
+          ) : (
+            <Button
+              variant="filled"
+              size="small"
+              label="Run Recommended"
+              onClick={() => { setRanAgent(true); setTimeout(() => setRanAgent(false), 3000); }}
+            />
+          )}
+
+          {/* Run Agent dropdown */}
+          <div ref={agentDropRef} className="relative">
+            <button
+              onClick={() => setAgentDropOpen(o => !o)}
+              className="flex items-center gap-1 text-[11px] font-medium px-3 rounded transition-colors"
+              style={{
+                height: 28,
+                border: "1px solid var(--color-dark-blue-300, #6b90d4)",
+                color: "var(--color-dark-blue-700, #14307a)",
+                background: "white",
+              }}
+              aria-expanded={agentDropOpen}
+              aria-haspopup="true"
+            >
+              Run Agent
+              <ChevronDown size={11} aria-hidden style={{ transition: "transform 0.15s", transform: agentDropOpen ? "rotate(180deg)" : "none" }} />
+            </button>
+
+            {agentDropOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 w-72 py-1 shadow-lg rounded-lg z-[300]"
+                style={{ background: "white", border: "1px solid var(--color-neutral-200, #e5e7eb)" }}
+              >
+                {BANNER_AGENTS.map(agent => (
+                  <button
+                    key={agent.id}
+                    onClick={() => { setActiveAgent(agent); setAgentDropOpen(false); setRanAgent(false); }}
+                    className="w-full text-left px-4 py-2.5 flex flex-col gap-0.5 transition-colors hover:bg-neutral-50"
+                  >
+                    <span
+                      className="text-[12px] font-medium"
+                      style={{ color: activeAgent.id === agent.id ? "var(--color-dark-blue-700, #14307a)" : "var(--color-neutral-800, #1f2937)" }}
+                    >
+                      {agent.label}
+                    </span>
+                    <span className="text-[11px]" style={{ color: "var(--color-neutral-500, #6b7280)" }}>
+                      {agent.desc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* User menu (anchored top-right) */}
       {menuOpen && (
