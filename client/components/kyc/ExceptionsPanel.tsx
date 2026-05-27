@@ -51,7 +51,7 @@ export const exceptions: Exception[] = [
     body: "Lorem Ipsum dolor sit amet, consectetur adipiscing elit.",
     confidence: 75,
     type: "validation",
-    derivation: "system",
+    derivation: "agent",
   },
   {
     entity: "Entity 13",
@@ -60,7 +60,7 @@ export const exceptions: Exception[] = [
     body: "Lorem Ipsum dolor sit amet, consectetur adipiscing elit.",
     confidence: 99,
     type: "validation",
-    derivation: "system",
+    derivation: "agent",
   },
 ];
 
