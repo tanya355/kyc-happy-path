@@ -1039,15 +1039,6 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
             <div className="shrink-0 self-center flex items-center gap-3">
               {/* Secondary actions */}
               <div className="flex items-center gap-1">
-                <Button
-                  variant="text"
-                  size="small"
-                  label={agentRunning ? "Running…" : "Agent Review"}
-                  icon={agentRunning ? <Loader2 size={12} className="animate-spin" aria-hidden /> : <Bot size={12} aria-hidden />}
-                  disabled={agentRunning}
-                  onClick={runAgentReview}
-                  aria-label="Run agent review of analyst work"
-                />
                 {onOpenAuditLog && (
                   <Button
                     variant="text"
