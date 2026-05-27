@@ -1375,8 +1375,8 @@ export default function QaDashboard() {
   const handleSelectItem  = (id: string) => { setSelectedItemId(prev => prev === id ? null : id); setSelectedOwnerId(null); };
 
   const activeDecision: ItemDecision | null =
-    (selectedOwnerId && ITEM_DECISIONS[selectedOwnerId]) ??
-    (selectedItemId  && ITEM_DECISIONS[selectedItemId])  ?? null;
+    (selectedOwnerId ? ITEM_DECISIONS[selectedOwnerId] : null) ??
+    (selectedItemId  ? ITEM_DECISIONS[selectedItemId]  : null) ?? null;
 
   return (
     <div className="relative min-h-screen flex flex-col overflow-hidden bg-white">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronRight, ChevronDown, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
-import { TableFilters } from "./FilterPanel";
+import { TableFilters, EMPTY_FILTERS } from "./FilterPanel";
 
 // ─── Types ────────────────────────────────────────────────────────
 type RiskLevel    = "Elevated" | "Moderate" | "Minimal";
@@ -172,7 +172,7 @@ export function QaDrgTable({
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const setSelected = onSelectionChange;
 
-  const activeFilters = filters ?? { entity: "", dueDateFrom: "", dueDateTo: "", jurisdictions: [], priorities: [], riskRatings: [] };
+  const activeFilters: TableFilters = filters ?? EMPTY_FILTERS;
 
   const filteredGroups = QA_DRG_GROUPS
     .filter(g => activeFilters.priorities.length === 0 || activeFilters.priorities.includes(g.priority.level))
@@ -180,7 +180,6 @@ export function QaDrgTable({
       ...g,
       entities: g.entities.filter(e => {
         if (activeFilters.entity && !e.name.toLowerCase().includes(activeFilters.entity.toLowerCase())) return false;
-        if (activeFilters.riskRatings.length > 0 && !activeFilters.riskRatings.includes(e.riskRating)) return false;
         return true;
       }),
     }))

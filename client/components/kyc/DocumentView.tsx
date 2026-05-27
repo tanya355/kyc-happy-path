@@ -255,7 +255,7 @@ function BoardResolutionDoc({
   addMode:       boolean;
   onSelect:      (id: string) => void;
   onAddClick:    (a: AnchorId) => void;
-  containerRef?: React.RefObject<HTMLDivElement>;
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const getAnn = (a: AnchorId) => anns.find(x => x.anchorId === a);
 
@@ -1029,7 +1029,7 @@ export function DocumentView({ docName }: { docName?: string }) {
         });
       }
       setSelectionText(text);
-      setSelectionPopover({ x: rect.left + rect.width / 2, y: rect.top });
+      setSelectionPopover({ x: rect.left + rect.width / 2, y: rect.top, text });
     }, 0);
   };
 

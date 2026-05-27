@@ -660,7 +660,7 @@ function CardDetailPopup({ card, onClose }: { card: NonNullable<CardPopup>; onCl
   const [docExpanded, setDocExpanded] = useState(false);
 
   const confidence = card.discrepancy ? 71 : 94;
-  const sourceCount = card.discrepancy ? 3 : 2;
+  const sourceCount: number = card.discrepancy ? 3 : 2;
   const stepCount = 3;
 
   const whySelected = card.discrepancy

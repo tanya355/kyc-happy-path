@@ -644,7 +644,6 @@ function SummaryStrip({ rows }: { rows: EnhancedOwnerRow[] }) {
       style={{
         background: "var(--color-neutral-000)",
         borderBottom: "1px solid var(--color-neutral-200)",
-        divideColor: "var(--color-neutral-200)",
       }}
     >
 
