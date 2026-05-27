@@ -12,7 +12,7 @@ import EvidenceLocker from "./pages/EvidenceLocker";
 import QaDashboard from "./pages/QaDashboard";
 import AnalystDashboard from "./pages/AnalystDashboard";
 import QaWorkHub from "./pages/QaWorkHub";
-import WorkQueue from "./pages/work-queue/index";
+import WorkQueue from "./pages/work-queue";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
