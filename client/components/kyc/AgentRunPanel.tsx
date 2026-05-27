@@ -161,6 +161,36 @@ function AgentRunPanelInner({ agentIds, onClose }: AgentRunPanelProps) {
   const allDone = doneCount === runAgents.length;
   const timerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  // Drag state — initialise to bottom-left
+  const [pos, setPos] = useState(() => ({
+    x: 24,
+    y: window.innerHeight - 24 - 500, // approx initial top
+  }));
+  const dragging   = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+
+  const onDragStart = (e: React.MouseEvent) => {
+    dragging.current = true;
+    dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+    document.body.style.userSelect = "none";
+
+    const onMove = (ev: MouseEvent) => {
+      if (!dragging.current) return;
+      setPos({
+        x: Math.max(0, Math.min(window.innerWidth  - 440, ev.clientX - dragOffset.current.x)),
+        y: Math.max(0, Math.min(window.innerHeight - 60,  ev.clientY - dragOffset.current.y)),
+      });
+    };
+    const onUp = () => {
+      dragging.current = false;
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup",   onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup",   onUp);
+  };
+
   useEffect(() => {
     // Sequential agent runner
     let delay = 400;
@@ -203,8 +233,8 @@ function AgentRunPanelInner({ agentIds, onClose }: AgentRunPanelProps) {
     <div
       style={{
         position: "fixed",
-        bottom: 24,
-        left: 24,
+        top: pos.y,
+        left: pos.x,
         width: 440,
         background: "white",
         border: "1px solid var(--color-neutral-200)",
@@ -214,10 +244,11 @@ function AgentRunPanelInner({ agentIds, onClose }: AgentRunPanelProps) {
         overflow: "hidden",
       }}
     >
-      {/* Header */}
+      {/* Header — drag handle */}
       <div
         className="flex items-center gap-2.5 px-4 py-3"
-        style={{ borderBottom: "1px solid var(--color-neutral-200)", background: "var(--color-neutral-000, #fafafa)" }}
+        style={{ borderBottom: "1px solid var(--color-neutral-200)", background: "var(--color-neutral-000, #fafafa)", cursor: "grab" }}
+        onMouseDown={onDragStart}
       >
         <span
           className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
@@ -240,17 +271,19 @@ function AgentRunPanelInner({ agentIds, onClose }: AgentRunPanelProps) {
           </p>
         </div>
         <button
+          onMouseDown={e => e.stopPropagation()}
           onClick={() => setMinimized(m => !m)}
           className="w-6 h-6 flex items-center justify-center rounded hover:bg-neutral-100 transition-colors"
-          style={{ color: "var(--color-neutral-500)" }}
+          style={{ color: "var(--color-neutral-500)", cursor: "default" }}
           aria-label={minimized ? "Expand" : "Minimize"}
         >
           <Minus size={13} />
         </button>
         <button
+          onMouseDown={e => e.stopPropagation()}
           onClick={onClose}
           className="w-6 h-6 flex items-center justify-center rounded hover:bg-neutral-100 transition-colors"
-          style={{ color: "var(--color-neutral-500)" }}
+          style={{ color: "var(--color-neutral-500)", cursor: "default" }}
           aria-label="Close"
         >
           <X size={13} />
