@@ -136,8 +136,8 @@ export function ExceptionsPanel({ activeIdx, onSelect, addressedIdxs = new Set()
                       </span>
                       {!isAddressed && (
                         <span className={`inline-flex items-center px-1.5 py-0 rounded-full text-[11px] font-medium border shrink-0 ${
-                          ex.confidence >= 90 ? "bg-ds-green-000 text-ds-green-700 border-ds-green-100"
-                            : ex.confidence >= 75 ? "bg-ds-yellow-000 text-ds-neutral-700 border-ds-yellow-300"
+                          ex.confidence >= 95 ? "bg-ds-green-000 text-ds-green-700 border-ds-green-100"
+                            : ex.confidence >= 80 ? "bg-ds-yellow-000 text-ds-neutral-700 border-ds-yellow-300"
                             : "bg-ds-red-000 text-ds-red-700 border-ds-red-200"
                         }`}>
                           {ex.confidence}%
