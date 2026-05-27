@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { User, Settings, LogOut, Zap, ChevronDown, Check } from "lucide-react";
+import { User, Settings, LogOut, Zap, ChevronDown, Check, Play } from "lucide-react";
 import { FloatingTopAppBar, Button } from "@kpmg-us/ad-design-lib";
 
 const tabs = [
@@ -22,12 +22,27 @@ export function TopNav() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen]           = useState(false);
   const [agentDropOpen, setAgentDropOpen] = useState(false);
-  const [ranAgent, setRanAgent]           = useState(false);
+  const [ranAgents, setRanAgents]         = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds]     = useState<Set<string>>(new Set([BANNER_AGENTS[0].id]));
   const [dropRect, setDropRect]           = useState<DOMRect | null>(null);
   const menuRef        = useRef<HTMLDivElement>(null);
   const agentDropRef   = useRef<HTMLDivElement>(null);
   const agentBtnRef    = useRef<HTMLDivElement>(null);
-  const [activeAgent, setActiveAgent]     = useState(BANNER_AGENTS[0]);
+
+  const toggleAgent = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const runSelected = () => {
+    if (selectedIds.has("agent-review")) window.dispatchEvent(new CustomEvent("kyc-run-agent-review"));
+    setRanAgents(new Set(selectedIds));
+    setAgentDropOpen(false);
+    setTimeout(() => setRanAgents(new Set()), 3000);
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -127,18 +142,21 @@ export function TopNav() {
 
         {/* Recommendation content */}
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <span
-            className="text-[12px] font-semibold truncate"
-            style={{ color: "var(--color-neutral-900, #0d1117)" }}
-          >
-            {activeAgent.label}
-          </span>
-          <span
-            className="text-[11px] truncate hidden sm:inline"
-            style={{ color: "var(--color-neutral-500, #6b7280)" }}
-          >
-            · {activeAgent.desc}
-          </span>
+          {selectedIds.size === 0 ? (
+            <span className="text-[12px] text-neutral-400 italic">No agents selected</span>
+          ) : selectedIds.size === 1 ? (() => {
+            const a = BANNER_AGENTS.find(x => selectedIds.has(x.id))!;
+            return (
+              <>
+                <span className="text-[12px] font-semibold truncate" style={{ color: "var(--color-neutral-900)" }}>{a.label}</span>
+                <span className="text-[11px] truncate hidden sm:inline" style={{ color: "var(--color-neutral-500)" }}>· {a.desc}</span>
+              </>
+            );
+          })() : (
+            <span className="text-[12px] font-semibold" style={{ color: "var(--color-neutral-900)" }}>
+              {selectedIds.size} agents selected
+            </span>
+          )}
         </div>
 
         {/* Actions */}
@@ -146,25 +164,20 @@ export function TopNav() {
           className="banner-actions flex items-center gap-2 shrink-0"
           style={{ transform: "scale(0.8)", transformOrigin: "center right" }}
         >
-          {ranAgent ? (
+          {ranAgents.size > 0 ? (
             <span
               className="flex items-center gap-1 text-[11px] font-medium px-3 py-1 rounded"
               style={{ color: "var(--color-green-700, #15803d)", background: "var(--color-green-000, #f0fdf4)" }}
             >
-              <Check size={11} aria-hidden /> Agent queued
+              <Check size={11} aria-hidden /> {ranAgents.size === 1 ? "Agent queued" : `${ranAgents.size} agents queued`}
             </span>
           ) : (
             <Button
               variant="outlined"
               size="small"
-              label="Run Recommended"
-              onClick={() => {
-                if (activeAgent.id === "agent-review") {
-                  window.dispatchEvent(new CustomEvent("kyc-run-agent-review"));
-                }
-                setRanAgent(true);
-                setTimeout(() => setRanAgent(false), 3000);
-              }}
+              label={selectedIds.size > 1 ? `Run Selected (${selectedIds.size})` : "Run Recommended"}
+              disabled={selectedIds.size === 0}
+              onClick={runSelected}
             />
           )}
 
@@ -189,34 +202,85 @@ export function TopNav() {
 
             {agentDropOpen && dropRect && createPortal(
               <div
-                className="py-1 shadow-xl rounded-lg"
                 style={{
                   position: "fixed",
                   top: dropRect.bottom + 6,
                   right: window.innerWidth - dropRect.right,
-                  width: 288,
+                  width: 300,
                   background: "white",
                   border: "1px solid var(--color-neutral-200, #e5e7eb)",
+                  borderRadius: 8,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                   zIndex: 9999,
+                  overflow: "hidden",
                 }}
               >
-                {BANNER_AGENTS.map(agent => (
+                {/* Header */}
+                <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderBottom: "1px solid var(--color-neutral-100)", background: "var(--color-neutral-050, #f9fafb)" }}>
+                  <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--color-neutral-600)" }}>Select Agents</span>
                   <button
-                    key={agent.id}
-                    onClick={() => { setActiveAgent(agent); setAgentDropOpen(false); setRanAgent(false); }}
-                    className="w-full text-left px-4 py-2.5 flex flex-col gap-0.5 transition-colors hover:bg-neutral-50"
+                    className="text-[11px] font-medium"
+                    style={{ color: "var(--color-dark-blue-600)" }}
+                    onClick={() => setSelectedIds(selectedIds.size === BANNER_AGENTS.length ? new Set() : new Set(BANNER_AGENTS.map(a => a.id)))}
                   >
-                    <span
-                      className="text-[12px] font-medium"
-                      style={{ color: activeAgent.id === agent.id ? "var(--color-dark-blue-700, #14307a)" : "var(--color-neutral-800, #1f2937)" }}
-                    >
-                      {agent.label}
-                    </span>
-                    <span className="text-[11px]" style={{ color: "var(--color-neutral-500, #6b7280)" }}>
-                      {agent.desc}
-                    </span>
+                    {selectedIds.size === BANNER_AGENTS.length ? "Deselect all" : "Select all"}
                   </button>
-                ))}
+                </div>
+
+                {/* Agent options */}
+                <div className="py-1">
+                  {BANNER_AGENTS.map(agent => {
+                    const checked = selectedIds.has(agent.id);
+                    return (
+                      <button
+                        key={agent.id}
+                        onClick={() => toggleAgent(agent.id)}
+                        className="w-full text-left px-4 py-2.5 flex items-start gap-3 transition-colors hover:bg-neutral-50"
+                      >
+                        {/* Checkbox */}
+                        <span
+                          className="shrink-0 mt-0.5 w-4 h-4 rounded flex items-center justify-center"
+                          style={{
+                            border: checked ? "none" : "1.5px solid var(--color-neutral-400)",
+                            background: checked ? "var(--color-dark-blue-600)" : "white",
+                            transition: "background 0.15s",
+                          }}
+                          aria-hidden
+                        >
+                          {checked && <Check size={10} color="white" strokeWidth={3} />}
+                        </span>
+                        <span className="flex flex-col gap-0.5 min-w-0">
+                          <span className="text-[12px] font-medium" style={{ color: checked ? "var(--color-dark-blue-700)" : "var(--color-neutral-800)" }}>
+                            {agent.label}
+                          </span>
+                          <span className="text-[11px]" style={{ color: "var(--color-neutral-500)" }}>
+                            {agent.desc}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Footer: Run button */}
+                <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderTop: "1px solid var(--color-neutral-100)", background: "var(--color-neutral-050, #f9fafb)" }}>
+                  <span className="text-[11px]" style={{ color: "var(--color-neutral-500)" }}>
+                    {selectedIds.size === 0 ? "No agents selected" : `${selectedIds.size} of ${BANNER_AGENTS.length} selected`}
+                  </span>
+                  <button
+                    onClick={runSelected}
+                    disabled={selectedIds.size === 0}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-semibold transition-colors"
+                    style={{
+                      background: selectedIds.size === 0 ? "var(--color-neutral-200)" : "var(--color-dark-blue-600)",
+                      color: selectedIds.size === 0 ? "var(--color-neutral-400)" : "white",
+                      cursor: selectedIds.size === 0 ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    <Play size={10} aria-hidden />
+                    Run{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
+                  </button>
+                </div>
               </div>,
               document.body
             )}
