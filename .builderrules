@@ -9,6 +9,7 @@
 - Only create new components if you are ABSOLUTELY SURE that you cannot feasibly use a component from ad-design-lib or ad-feature-components.
 - Always choose basic building block components from ad-design-lib, never use basic html button tags etc.
 - Prioritize using ad-design-lib components over getting the figma import to be pixel perfect.
+- Follow the React 19 and strict TypeScript standards defined in `ReactTypescriptUpdate.md` and `docs/dev-guides/style-guides/TypeScript-Style-Guide.md` for all new code and changes (functional components only, no `any`, prefer `type` aliases and union types, use `import type`, keep `tsconfig.json` strict settings intact).
 ## Don't
 - Do not add new dependencies without asking.
 - Do no introduce custom CSS if tokens/components exist.
