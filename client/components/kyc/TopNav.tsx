@@ -25,9 +25,10 @@ export function TopNav() {
   const [ranAgents, setRanAgents]         = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds]     = useState<Set<string>>(new Set([BANNER_AGENTS[0].id]));
   const [dropRect, setDropRect]           = useState<DOMRect | null>(null);
-  const menuRef        = useRef<HTMLDivElement>(null);
-  const agentDropRef   = useRef<HTMLDivElement>(null);
-  const agentBtnRef    = useRef<HTMLDivElement>(null);
+  const menuRef           = useRef<HTMLDivElement>(null);
+  const agentDropRef      = useRef<HTMLDivElement>(null);
+  const agentBtnRef       = useRef<HTMLDivElement>(null);
+  const agentPortalRef    = useRef<HTMLDivElement>(null);
 
   const toggleAgent = (id: string) => {
     setSelectedIds(prev => {
@@ -56,7 +57,10 @@ export function TopNav() {
   useEffect(() => {
     if (!agentDropOpen) return;
     const handler = (e: MouseEvent) => {
-      if (agentDropRef.current && !agentDropRef.current.contains(e.target as Node)) setAgentDropOpen(false);
+      const t = e.target as Node;
+      const inBtn    = agentDropRef.current?.contains(t);
+      const inPortal = agentPortalRef.current?.contains(t);
+      if (!inBtn && !inPortal) setAgentDropOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -202,6 +206,7 @@ export function TopNav() {
 
             {agentDropOpen && dropRect && createPortal(
               <div
+                ref={agentPortalRef}
                 style={{
                   position: "fixed",
                   top: dropRect.bottom + 6,
