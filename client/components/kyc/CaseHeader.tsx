@@ -1029,10 +1029,10 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
 
             {/* Actions */}
             <div className="shrink-0 self-center flex items-center gap-3">
-              {/* Primary actions */}
-              <div className="flex items-center gap-2 case-header-actions">
+              {/* Secondary actions */}
+              <div className="flex items-center gap-1">
                 <Button
-                  variant="outlined"
+                  variant="text"
                   size="small"
                   label={agentRunning ? "Running…" : "Agent Review"}
                   icon={agentRunning ? <Loader2 size={12} className="animate-spin" aria-hidden /> : <Bot size={12} aria-hidden />}
@@ -1040,31 +1040,15 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
                   onClick={runAgentReview}
                   aria-label="Run agent review of analyst work"
                 />
-                <Button
-                  variant="outlined"
-                  size="small"
-                  label="Escalate"
-                  showIconTrailing
-                  icon={<AlertOctagon size={13} />}
-                  disabled={resolvedCount === 0 && !agentReviewComplete}
-                  onClick={() => setShowEscalate(true)}
-                />
-                <Button
-                  variant="filled"
-                  size="small"
-                  label="Submit"
-                  showIconTrailing
-                  icon={<Send size={13} />}
-                  disabled={resolvedCount === 0 && !agentReviewComplete}
-                  onClick={() => setShowConfirm(true)}
-                />
-              </div>
-
-              {/* Divider */}
-              <div className="w-px h-5 bg-kyc-neutral-200 shrink-0" aria-hidden="true" />
-
-              {/* Secondary actions */}
-              <div className="flex items-center gap-1">
+                {onOpenAuditLog && (
+                  <Button
+                    variant="text"
+                    size="small"
+                    label="Audit Log"
+                    icon={<ClipboardList size={13} />}
+                    onClick={onOpenAuditLog}
+                  />
+                )}
                 {onOpenReachOuts && (
                   <div className="relative inline-flex">
                     <Button
@@ -1085,21 +1069,37 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
                     )}
                   </div>
                 )}
-                {onOpenAuditLog && (
-                  <Button
-                    variant="text"
-                    size="small"
-                    label="Audit Log"
-                    icon={<ClipboardList size={13} />}
-                    onClick={onOpenAuditLog}
-                  />
-                )}
+              </div>
+
+              {/* Divider */}
+              <div className="w-px h-5 bg-kyc-neutral-200 shrink-0" aria-hidden="true" />
+
+              {/* Primary actions */}
+              <div className="flex items-center gap-2 case-header-actions">
                 <Button
-                  variant="text"
+                  variant="outlined"
                   size="small"
                   label="Cancel"
                   icon={<XCircle size={13} />}
                   onClick={() => navigate("/dashboard")}
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  label="Escalate"
+                  showIconTrailing
+                  icon={<AlertOctagon size={13} />}
+                  disabled={resolvedCount === 0 && !agentReviewComplete}
+                  onClick={() => setShowEscalate(true)}
+                />
+                <Button
+                  variant="filled"
+                  size="small"
+                  label="Submit"
+                  showIconTrailing
+                  icon={<Send size={13} />}
+                  disabled={resolvedCount === 0 && !agentReviewComplete}
+                  onClick={() => setShowConfirm(true)}
                 />
               </div>
             </div> {/* end actions wrapper */}
