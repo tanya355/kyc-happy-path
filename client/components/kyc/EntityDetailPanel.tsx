@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import {
-  X, CheckCircle2, AlertTriangle, FileText, Sparkles, Shield,
+  X, CheckCircle2, AlertTriangle, FileText, Sparkles,
   Clock, ChevronDown, ChevronRight, ExternalLink, AlertCircle,
-  Building2, Database, BarChart2,
+  Building2,
 } from "lucide-react";
 import { Button } from "@kpmg-us/ad-design-lib";
-import { AttrRow, ENTITY_ATTRS, ROOT_ATTRS, getAttrReasoning } from "./ContentTreeCanvas";
+import { AttrRow, ENTITY_ATTRS, getAttrReasoning } from "./ContentTreeCanvas";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -198,7 +198,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-[9px] font-bold tracking-widest uppercase mb-2" style={{ color: "var(--color-neutral-500)" }}>{children}</p>;
 }
 
-function ConfBar({ pct, riskLevel }: { pct: number; riskLevel?: string }) {
+function ConfBar({ pct }: { pct: number; riskLevel?: string }) {
   const color = pct >= 85 ? "var(--color-green-500)" : pct >= 60 ? "var(--color-yellow-500)" : "var(--color-red-500)";
   return (
     <div>
@@ -215,7 +215,7 @@ function ConfBar({ pct, riskLevel }: { pct: number; riskLevel?: string }) {
 
 // ─── Tab: Overview ────────────────────────────────────────────────
 
-function OverviewTab({ entityName, meta, attrs }: { entityName: string; meta: EntityMeta; attrs: AttrRow[] }) {
+function OverviewTab({ meta, attrs }: { entityName: string; meta: EntityMeta; attrs: AttrRow[] }) {
   const verified = attrs.filter(a => a.status === "verified").length;
   const conflict = attrs.filter(a => a.status === "conflict").length;
   const missing  = attrs.filter(a => a.status === "missing").length;
@@ -277,7 +277,7 @@ function OverviewTab({ entityName, meta, attrs }: { entityName: string; meta: En
       <div>
         <SectionLabel>Entity Context</SectionLabel>
         <div className="border overflow-hidden" style={{ borderColor: "var(--color-neutral-200)" }}>
-          {contextRows.map(([label, val], i) => (
+          {contextRows.map(([label, val]) => (
             <div key={label} className="flex items-start border-b last:border-0" style={{ borderColor: "var(--color-neutral-100)" }}>
               <div className="w-36 shrink-0 px-3 py-2" style={{ background: "var(--color-neutral-050)" }}>
                 <p className="text-[9px] font-bold tracking-widest uppercase" style={{ color: "var(--color-neutral-500)" }}>{label}</p>

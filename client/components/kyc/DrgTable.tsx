@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { WorkQueueFilters } from "./WorkQueueFilterPanel";
-import { Link } from "react-router-dom";
 import { ChevronRight, ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, Lock } from "lucide-react";
 
 type SortKey = "name" | "dueDate" | "riskRating" | "confidence" | "exceptions" | "status" | "action";

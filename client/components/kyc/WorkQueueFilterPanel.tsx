@@ -102,7 +102,7 @@ function Checkbox({
   );
 }
 
-export function WorkQueueFilterPanel({ filters, onChange, onClose }: Props) {
+export function WorkQueueFilterPanel({ filters, onChange }: Props) {
   const toggleArr = (arr: string[], val: string): string[] =>
     arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
 

@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import {
   User, ChevronRight, ChevronDown,
-  CheckCircle, X, Sparkles, ArrowRight, RotateCcw, AlertOctagon,
-  Send, ArrowUpRight, ChevronLeft, Edit2, Trash2, Check,
-  FileText, MessageSquare, Bot, RefreshCw,
+  CheckCircle, X, Sparkles, RotateCcw, AlertOctagon,
+  Send, ArrowUpRight, Edit2, Trash2, Check,
+  FileText, Bot, RefreshCw,
   AlertTriangle, ExternalLink, MessageCircle, Plus, Info, Globe,
   Shield, Users2, Zap, Flag, TrendingDown, ClipboardCheck, Lightbulb, Briefcase, Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TopNav } from "@/components/kyc/TopNav";
 import { Button } from "@kpmg-us/ad-design-lib";
-import { DocumentView } from "@/components/kyc/DocumentView";
 import {
   BeneficialOwnersView,
   ENHANCED_OWNERS, type EnhancedOwnerRow,
@@ -20,7 +19,6 @@ import {
 /*  Types                                                               */
 /* ================================================================== */
 type RiskFlag     = "high" | "medium" | "low";
-type WorkspaceTab = "form" | "document";
 type FilterType   = "all" | "low-confidence" | "needs-review" | "missing-evidence" | "exceptions";
 
 interface AttributeItem {
@@ -542,7 +540,7 @@ function getAllFlaggedItems(): (AttributeItem & { entityName: string; section: s
 /* ================================================================== */
 /*  QA Review sub-header                                                */
 /* ================================================================== */
-function QaReviewHeader({ entry }: { entry: QueueEntry }) {
+function QaReviewHeader({ entry: _entry }: { entry: QueueEntry }) {
   const navigate = useNavigate();
   return (
     <div className="bg-white">
@@ -648,9 +646,9 @@ function QaReviewHeader({ entry }: { entry: QueueEntry }) {
 function ReviewLensPanel({ lens, onChangeLens }: { lens: string; onChangeLens: (l: string) => void }) {
   const active = REVIEW_LENSES.find(l => l.id === lens) ?? REVIEW_LENSES[0];
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [activeQ, setActiveQ]         = useState<string | null>(null);
-  const [loadingQ, setLoadingQ]       = useState<string | null>(null);
-  const [answeredQ, setAnsweredQ]     = useState<string | null>(null);
+  const [, setActiveQ]   = useState<string | null>(null);
+  const [, setLoadingQ]  = useState<string | null>(null);
+  const [, setAnsweredQ] = useState<string | null>(null);
 
   const handleChangeLens = (id: string) => {
     if (id === lens) return;
@@ -671,16 +669,6 @@ function ReviewLensPanel({ lens, onChangeLens }: { lens: string; onChangeLens: (
     setTimeout(() => setIsAnalyzing(false), 1400);
   };
 
-  const handleFollowUp = (q: string) => {
-    if (loadingQ) return;
-    if (activeQ === q) { setActiveQ(null); setAnsweredQ(null); return; }
-    setActiveQ(q);
-    setAnsweredQ(null);
-    setLoadingQ(q);
-    setTimeout(() => { setLoadingQ(null); setAnsweredQ(q); }, 900 + Math.random() * 400);
-  };
-
-  const currentAnswer = active.followUps.find(f => f.q === answeredQ)?.a ?? null;
 
   return (
     <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--color-neutral-200)", background: "var(--color-base-white)" }}>
@@ -882,21 +870,6 @@ function EntityAccordion({
   onToggleSub: (id: string) => void; onSelectItem: (id: string) => void; onSelectOwner: (id: string) => void;
   filter: FilterType;
 }) {
-  const allItems = [...entity.cip, ...entity.dueDiligence].flatMap(s => s.items);
-  const flagCount = allItems.filter(i => i.action !== "none").length + (entity.cip.reduce((s, sub) => s + (sub.missing ?? 0), 0));
-  const hasOwnerIssues = entity.cip.some(s => s.ownerRows && ((s.needReview ?? 0) + (s.missing ?? 0)) > 0);
-  const totalFlags = flagCount + (hasOwnerIssues ? 1 : 0);
-
-  const isPrincipal    = entity.entityType === "principal";
-  const isRelatedParty = entity.entityType === "beneficial-owner";
-  const isSubEntity    = isPrincipal || isRelatedParty;
-
-  const entityTypeLabel = isPrincipal ? "Principal" : isRelatedParty ? "Related Party" : null;
-
-  const entityIcon = isSubEntity
-    ? <User size={11} className="shrink-0" style={{ color: "var(--color-neutral-500)" }} aria-hidden />
-    : <Globe size={11} className="shrink-0" style={{ color: "var(--color-dark-blue-600)" }} aria-hidden />;
-
   return (
     <div>
       {[...entity.cip, ...entity.dueDiligence].map(sub => (
@@ -1309,26 +1282,12 @@ const QA_ENTITY_TO_SECTION_ID: Record<string, string> = {
   "Entity 13":               "principal-fink",
 };
 
-const QA_ENTITY_CASE_NUMBERS: Record<string, string> = {
-  "BlackRock Advisors":      "KYC-28821",
-  "BlackRock Institutional": "KYC-28834",
-  "Entity 13":               "KYC-29107",
-};
-
 export default function QaDashboard() {
-  const [selectedEntities, setSelectedEntities] = useState<string[]>(DEFAULT_QA_ENTITIES);
-  const [focusedEntity, setFocusedEntity] = useState<string>(DEFAULT_QA_ENTITIES[0]);
-  const removeEntity = (name: string) => {
-    setSelectedEntities(prev => {
-      const next = prev.filter(e => e !== name);
-      if (name === focusedEntity && next.length > 0) setFocusedEntity(next[0]);
-      return next;
-    });
-  };
+  const [focusedEntity] = useState<string>(DEFAULT_QA_ENTITIES[0]);
 
   type QaComment = { id: number; author: string; text: string; timestamp: string; sentToAnalyst?: boolean };
   const [comments, setComments] = useState<QaComment[]>([]);
-  const [commentOpen, setCommentOpen] = useState(false);
+  const [commentOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
@@ -1340,7 +1299,7 @@ export default function QaDashboard() {
     setCommentText("");
   };
 
-  const [queueIdx,        setQueueIdx]        = useState(0);
+  const [queueIdx] = useState(0);
   const [reviewLens,      setReviewLens]       = useState("areas-of-concern");
   const [activeFilter,    setActiveFilter]     = useState<FilterType>("all");
   const [selectedItemId,  setSelectedItemId]   = useState<string | null>(null);

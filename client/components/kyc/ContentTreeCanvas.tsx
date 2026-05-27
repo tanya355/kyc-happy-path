@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Plus, Minus, Maximize2, CheckCircle2, AlertTriangle, FileText, Users, X, ExternalLink, Info, ChevronDown, ChevronRight, Filter, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Minus, Maximize2, CheckCircle2, AlertTriangle, FileText, X, ExternalLink, ChevronDown, ChevronRight, Filter, Sparkles, Loader2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────
 type ViewMode = "child" | "parent";
@@ -238,16 +238,6 @@ function MissingTag() {
     </span>
   );
 }
-function VerifiedIcon() {
-  return (
-    <CheckCircle2 size={24} strokeWidth={2} className="text-ds-green-700 shrink-0" aria-label="Verified" />
-  );
-}
-function ConflictIcon() {
-  return (
-    <AlertTriangle size={24} strokeWidth={2} className="shrink-0" style={{ color: "var(--color-red-700)" }} aria-label="Conflict" />
-  );
-}
 function SourcePill({ label }: { label: string }) {
   return (
     <div className="inline-flex items-center gap-1 text-[10px] text-gray-400 bg-gray-50 border border-kyc-neutral-200 rounded-full px-1.5 py-0.5 mt-1.5 cursor-pointer hover:bg-gray-100">
@@ -269,223 +259,6 @@ function SourceBadge({ source }: { source: DataSource }) {
   );
 }
 
-// ─── Attribute Detail Popup ───────────────────────────────────────
-function AttributeDetailPopup({ attr, onClose }: { attr: AttrRow; onClose: () => void }) {
-  const [reasoningOpen, setReasoningOpen] = useState(false);
-  const reasoning = getAttrReasoning(attr);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
-
-  const statusTag =
-    attr.status === "conflict" ? <ConflictTag /> :
-    attr.status === "missing"  ? <MissingTag /> :
-    <VerifiedChip />;
-
-  return (
-    <div
-      className="fixed inset-0 z-[350] flex items-center justify-center"
-      style={{ background: "rgba(0,16,48,0.45)", backdropFilter: "blur(2px)" }}
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Attribute detail: ${attr.label}`}
-    >
-      <div
-        className="relative flex flex-col overflow-hidden"
-        style={{
-          width: 400,
-          background: "var(--color-base-white)",
-          border: "1px solid var(--color-neutral-200)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
-          borderRadius: 12,
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Blue accent bar */}
-        <div className="h-1 w-full shrink-0" style={{ background: "var(--color-dark-blue-600)" }} />
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-kyc-neutral-200 shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[13px] font-semibold text-kyc-neutral-800 truncate">{attr.label}</span>
-            {statusTag}
-          </div>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded text-kyc-neutral-500 hover:text-kyc-neutral-800 hover:bg-kyc-neutral-100 transition-colors shrink-0 ml-2"
-            aria-label="Close attribute detail"
-          >
-            <X size={13} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 px-4 py-4 space-y-4">
-
-          {/* Value */}
-          <div>
-            <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Value</p>
-            <p className={`text-[13px] font-semibold leading-snug ${
-              attr.status === "conflict" ? "text-amber-700" :
-              attr.status === "missing"  ? "text-red-600"   :
-              "text-kyc-neutral-800"
-            }`}>{attr.value}</p>
-          </div>
-
-          {/* Meta grid */}
-          <div className="grid grid-cols-2 gap-3 border-t border-kyc-neutral-100 pt-3">
-            <div>
-              <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Data Source</p>
-              <SourceBadge source={attr.source} />
-            </div>
-            <div>
-              <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Group</p>
-              <p className="text-[11px] font-medium text-kyc-neutral-700">{attr.group}</p>
-            </div>
-            <div>
-              <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Last Updated</p>
-              <p className="text-[11px] font-medium text-kyc-neutral-700">{attr.lastUpdated ?? "—"}</p>
-            </div>
-            <div>
-              <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Status</p>
-              <div className="mt-0.5">{statusTag}</div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          {attr.notes && (
-            <div className="border-t border-kyc-neutral-100 pt-3">
-              <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Notes</p>
-              <p className="text-[11px] text-kyc-neutral-700 leading-snug">{attr.notes}</p>
-            </div>
-          )}
-
-          {/* Source context */}
-          <div className="border-t border-kyc-neutral-100 pt-3">
-            <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-2">Source System</p>
-            <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-kyc-neutral-50 border border-kyc-neutral-200">
-              <SourceBadge source={attr.source} />
-              <div className="text-[10px] text-kyc-neutral-700 leading-snug">
-                {attr.source === "CRM"         && "Salesforce CRM — internal client relationship data"}
-                {attr.source === "Forge"       && "KPMG Forge — workflow, KYC status, and document management"}
-                {attr.source === "Third Party" && "External data vendor — Refinitiv / Dun & Bradstreet / OFAC"}
-              </div>
-              <button
-                className="ml-auto flex items-center gap-1 text-[9px] text-kyc-neutral-500 hover:text-kyc-neutral-800 shrink-0 transition-colors"
-                onClick={() => {}}
-                aria-label="Open in source system"
-              >
-                <ExternalLink size={9} /> Open in source system
-              </button>
-            </div>
-          </div>
-
-          {/* Agent Reasoning — collapsible progressive disclosure */}
-          <div className="border-t border-kyc-neutral-100 pt-3">
-            <button
-              className="w-full flex items-center justify-between gap-2 text-left"
-              onClick={() => setReasoningOpen(r => !r)}
-              aria-expanded={reasoningOpen}
-              aria-controls="attr-reasoning-panel"
-            >
-              <div className="flex items-center gap-1.5">
-                <Sparkles size={10} className="text-kyc-neutral-500 shrink-0" aria-hidden />
-                <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500">Agent Reasoning</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full border"
-                  style={{
-                    background: reasoning.confidence >= 85 ? "var(--color-green-000)" : reasoning.confidence >= 60 ? "var(--color-yellow-000)" : "var(--color-red-000)",
-                    borderColor: reasoning.confidence >= 85 ? "var(--color-green-200)" : reasoning.confidence >= 60 ? "var(--color-yellow-200)" : "var(--color-red-200)",
-                    color: reasoning.confidence >= 85 ? "var(--color-green-700)" : reasoning.confidence >= 60 ? "var(--color-yellow-800)" : "var(--color-red-700)",
-                  }}
-                >
-                  {reasoning.confidence}% confidence
-                </span>
-                {reasoningOpen
-                  ? <ChevronDown size={10} className="text-kyc-neutral-400 shrink-0" />
-                  : <ChevronRight size={10} className="text-kyc-neutral-400 shrink-0" />}
-              </div>
-            </button>
-
-            {reasoningOpen && (
-              <div id="attr-reasoning-panel" className="mt-3 space-y-3">
-
-                {/* Why this was selected */}
-                <div>
-                  <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Why this was selected</p>
-                  <p className="text-[10.5px] text-kyc-neutral-700 leading-snug">{reasoning.whySelected}</p>
-                </div>
-
-                {/* Reasoning steps */}
-                <div>
-                  <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1.5">Reasoning steps</p>
-                  <ol className="space-y-1.5">
-                    {reasoning.reasoningSteps.map((step, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span
-                          className="shrink-0 w-[16px] h-[16px] rounded-full flex items-center justify-center text-[8px] font-bold border mt-0.5"
-                          style={{ borderColor: "var(--color-neutral-300)", color: "var(--color-neutral-600)", background: "var(--color-neutral-050)" }}
-                        >
-                          {i + 1}
-                        </span>
-                        <p className="text-[10.5px] text-kyc-neutral-700 leading-snug">{step}</p>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-
-                {/* Evidence reviewed */}
-                <div>
-                  <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1.5">Evidence reviewed</p>
-                  <div className="space-y-1">
-                    {reasoning.evidenceSources.map((ev, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-1.5 px-2 py-1.5 border"
-                        style={{ background: "var(--color-neutral-050)", borderColor: "var(--color-neutral-200)" }}
-                      >
-                        <FileText size={9} className="text-kyc-neutral-500 shrink-0" aria-hidden />
-                        <p className="text-[10px] text-kyc-neutral-700 leading-snug">{ev}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Confidence assessment */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500">Confidence assessment</p>
-                    <p className="text-[9px] font-semibold text-kyc-neutral-600">{reasoning.confidence}%</p>
-                  </div>
-                  <div className="h-1 bg-kyc-neutral-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-1 rounded-full"
-                      style={{
-                        width: `${reasoning.confidence}%`,
-                        background: reasoning.confidence >= 85 ? "var(--color-green-500)" : reasoning.confidence >= 60 ? "var(--color-yellow-500)" : "var(--color-red-500)",
-                      }}
-                    />
-                  </div>
-                  <p className="text-[9px] text-kyc-neutral-500 mt-1">
-                    Validated against {reasoning.evidenceSources.length} source{reasoning.evidenceSources.length !== 1 ? "s" : ""} · {reasoning.reasoningSteps.length} reasoning steps
-                  </p>
-                </div>
-
-              </div>
-            )}
-          </div>
-
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Reasoning Drawer (now used as a tab panel in Index.tsx) ─────
 export function ReasoningDrawer({ attr, onClose }: { attr: AttrRow; onClose: () => void }) {
@@ -916,7 +689,7 @@ const L_CX     = 155; const R_CX = 545; const MID_CX = 350;
 const ROOT_Y = 24; const ROOT_W = 300; const ROOT_H = 90;
 const ROOT_X = MID_CX - ROOT_W / 2; const ROOT_BOT = ROOT_Y + ROOT_H;
 const BRANCH_Y = 135;
-const ENT_LABEL_Y = 142; const ENT_Y = 154; const ENT_H = 52; const ENT_BOT = ENT_Y + ENT_H;
+const ENT_Y = 154; const ENT_H = 52; const ENT_BOT = ENT_Y + ENT_H;
 const CARD_GAP = 10;
 const C1_Y = ENT_BOT + CARD_GAP; const C1_H = 44; const C1_BOT = C1_Y + C1_H;
 const C2_Y = C1_BOT + CARD_GAP;  const C2_H = 44; const C2_BOT = C2_Y + C2_H;
@@ -1243,7 +1016,6 @@ function InspectDrawer({ id, onClose, onAttrClick }: { id: string; onClose: () =
 
 // ─── Main Canvas ──────────────────────────────────────────────────
 export function ContentTreeCanvas({
-  onViewModeChange,
   selectedAttr = null,
   onAttrSelect,
 }: {
@@ -1251,7 +1023,7 @@ export function ContentTreeCanvas({
   selectedAttr?: AttrRow | null;
   onAttrSelect?: (attr: AttrRow | null) => void;
 } = {}) {
-  const [viewMode, setViewMode]   = useState<ViewMode>("child");
+  const [viewMode] = useState<ViewMode>("child");
   const [tx, setTx]               = useState(0);
   const [ty, setTy]               = useState(16);
   const [scale, setScale]         = useState(0.85);
@@ -1310,7 +1082,6 @@ export function ContentTreeCanvas({
     return () => ro.disconnect();
   }, [fitToContainer]);
 
-  const switchMode = (m: ViewMode) => { setViewMode(m); setDrawer(null); onViewModeChange?.(m); };
 
   return (
     <div className="flex flex-col w-full h-full overflow-hidden bg-white">

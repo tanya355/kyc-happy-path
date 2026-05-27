@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
-  FileText, Clock, CheckCircle2,
+  FileText, Clock,
   AlertTriangle, MessageSquare,
   Globe, ChevronRight, Paperclip,
-  TrendingUp, TrendingDown, Activity,
-  ArrowUpRight, Zap, ShieldAlert,
-  BarChart2, ArrowRight, ExternalLink,
+  Activity,
+  Zap, ShieldAlert,
+  ExternalLink,
   Maximize2, X,
 } from "lucide-react";
 import {
@@ -26,49 +26,6 @@ const card: React.CSSProperties = {
 };
 
 // ── AI Operational Briefing data ──────────────────────────────────────
-
-const AI_BRIEFING = [
-  {
-    severity: "critical",
-    label: "Critical Risk",
-    Icon: ShieldAlert,
-    text: "3 cases projected to breach SLA within 24 hours",
-    sub: "KYC-2194, KYC-2210, KYC-2188 — immediate action required",
-    dotColor: "var(--color-red-700)",
-    labelClass: "text-ds-neutral-800",
-    bgStyle: { background: "var(--color-red-000)", borderColor: "var(--color-red-200)" },
-  },
-  {
-    severity: "warning",
-    label: "Bottleneck Detected",
-    Icon: TrendingUp,
-    text: "Decision Support queue increased 14% since Monday",
-    sub: "22 cases pending analyst determination — backlog accelerating",
-    dotColor: "var(--color-yellow-800)",
-    labelClass: "text-ds-neutral-800",
-    bgStyle: { background: "var(--color-yellow-000)", borderColor: "var(--color-yellow-300)" },
-  },
-  {
-    severity: "positive",
-    label: "Improving",
-    Icon: TrendingDown,
-    text: "Client backlog improving — 8 responses received overnight",
-    sub: "Blocking rate down 6% vs last week, momentum sustained",
-    dotColor: "var(--color-green-700)",
-    labelClass: "text-ds-neutral-800",
-    bgStyle: { background: "var(--color-green-000)", borderColor: "var(--color-green-200)" },
-  },
-  {
-    severity: "forecast",
-    label: "Forecast",
-    Icon: BarChart2,
-    text: "Active case volume projected to decline 34% by May 15",
-    sub: "Workflow efficiency improving on current trajectory",
-    dotColor: "var(--color-dark-blue-600)",
-    labelClass: "text-ds-neutral-800",
-    bgStyle: { background: "var(--color-dark-blue-000)", borderColor: "var(--color-dark-blue-100)" },
-  },
-];
 
 // ── AI action detail responses ────────────────────────────────────────
 
@@ -207,13 +164,6 @@ const STATUS_DATA = [
 
 type PriorityLevel2 = "High" | "Medium" | "Low";
 type CaseStatus = "Escalated" | "Overdue" | "Pending Decision" | "Awaiting Client";
-
-const STATUS_STYLES: Record<CaseStatus, { label: string; className: string }> = {
-  Escalated:        { label: "Escalated",       className: "bg-ds-red-000 text-ds-red-700 border border-ds-red-200" },
-  Overdue:          { label: "Overdue",          className: "bg-ds-red-000 text-ds-red-700 border border-ds-red-200" },
-  "Pending Decision": { label: "Pending Decision", className: "bg-ds-yellow-000 text-ds-neutral-700 border border-ds-yellow-300" },
-  "Awaiting Client":  { label: "Awaiting Client",  className: "bg-ds-neutral-100 text-ds-neutral-600 border border-ds-neutral-200" },
-};
 
 const PRIORITY_CASES: {
   priority: PriorityLevel2;
@@ -371,22 +321,6 @@ function DonutProgress({ pct }: { pct: number }) {
   );
 }
 
-function Sparkline() {
-  const pts = [3.8, 3.5, 3.2, 3.6, 2.9, 2.7, 3.1];
-  const W = 64, H = 28;
-  const min = Math.min(...pts), max = Math.max(...pts);
-  const coords = pts.map((v, i) => {
-    const x = (i / (pts.length - 1)) * W;
-    const y = H - ((v - min) / (max - min || 1)) * H;
-    return `${x},${y}`;
-  });
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-      <polyline points={coords.join(" ")} fill="none" stroke="var(--color-dark-blue-300)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 const tooltipStyle = {
   contentStyle: { fontSize: 11, background: "#ffffff", border: "1px solid #E5E5E5", borderRadius: 6, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
   labelStyle: { fontWeight: 700, color: "#00338D" },
@@ -514,8 +448,6 @@ export default function AnalystDashboard() {
   const [statusVisible, setStatusVisible] = useState(true);
   const [activeAction, setActiveAction] = useState<number | null>(null);
   const [kpiContext, setKpiContext] = useState<{ label: string; value: string; unit: string; summary: string; points: string[]; allFrames?: TickerFrame[] } | null>(null);
-  const [signedOff, setSignedOff] = useState(false);
-  const [hoveredSegment, setHoveredSegment] = useState<null | { label: string; count: number; pct: number; color: string; x: number; y: number }>(null);
   const [expandedPanel, setExpandedPanel] = useState<"ai" | "collab" | null>(null);
 
   useEffect(() => {
@@ -531,7 +463,6 @@ export default function AnalystDashboard() {
 
   const activePeriod = PERIODS.find(p => p.label === "Today")!;
   const metrics = activePeriod.kpis;
-  const deltas = activePeriod.delta;
 
   const animAttention    = useAnimatedCounter(metrics.attention);
   const animResponseTimeRaw = useAnimatedCounter(Math.round(parseFloat(metrics.responseTime) * 10));
@@ -801,7 +732,6 @@ export default function AnalystDashboard() {
                       Medium: "bg-ds-yellow-000 text-ds-neutral-700 border border-ds-yellow-300",
                       Low:    "bg-ds-neutral-100 text-ds-neutral-600 border border-ds-neutral-200",
                     };
-                    const statusMeta = STATUS_STYLES[c.status];
                     return (
                       <Link
                         key={c.id}

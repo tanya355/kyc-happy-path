@@ -96,11 +96,6 @@ const R_TR_HOVER: Record<RiskFlag, string> = {
   medium: "hover:bg-amber-50",
   low:    "hover:bg-blue-50",
 };
-const R_TEXT: Record<RiskFlag, string> = {
-  high:   "text-red-700",
-  medium: "text-amber-700",
-  low:    "text-blue-700",
-};
 
 const S_CFG: Record<AnnStatus, { l: string; cls: string; icon: React.ReactNode }> = {
   open:      { l: "Open",      cls: "text-amber-700 bg-amber-50 border-amber-200",  icon: <Clock size={9} />          },
@@ -154,11 +149,6 @@ const REL_DOCS: { type: string; entity: string; updated: string; status: RelDocS
   { type: "UBO Declaration",                  entity: "Vanguard Group",            updated: "Nov 15, 2025", status: "Verified" },
 ];
 
-const REL_CLS: Record<RelDocStatus, string> = {
-  Verified: "text-green-700 bg-green-50",
-  Pending:  "text-amber-700 bg-amber-50",
-  Expired:  "text-red-700 bg-red-50",
-};
 
 /* ------------------------------------------------------------------ */
 /*  Tiny shared helpers                                                 */
@@ -478,77 +468,6 @@ function BoardResolutionDoc({
           );
         })
       }
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Annotation List                                                     */
-/* ------------------------------------------------------------------ */
-
-function AnnList({
-  anns, activeId, onSelect, onEnterAddMode,
-}: {
-  anns:          Annotation[];
-  activeId:      string | null;
-  onSelect:      (id: string) => void;
-  onEnterAddMode: () => void;
-}) {
-  const open       = anns.filter(a => a.status === "open").length;
-  const escalated  = anns.filter(a => a.status === "escalated").length;
-
-  return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-2 py-1.5 border-b border-kyc-neutral-200 bg-kyc-neutral-50">
-        <div>
-          <span className="text-[10px] font-bold text-kyc-neutral-800">Annotations </span>
-          <span className="text-[9px] text-kyc-neutral-600">({anns.length})</span>
-        </div>
-        <button
-          onClick={onEnterAddMode}
-          className="flex items-center gap-0.5 text-[9px] font-semibold text-kyc-blue border border-kyc-blue/30 rounded-full px-1.5 py-0.5 hover:bg-kyc-blue/5 transition-colors"
-        >
-          <Plus size={8} />Add
-        </button>
-      </div>
-
-      {/* Summary pills */}
-      <div className="shrink-0 flex gap-1.5 px-2 py-1.5 border-b border-kyc-neutral-100">
-        <span className="inline-flex items-center gap-0.5 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
-          <AlertTriangle size={7} />{escalated} Escalated
-        </span>
-        <span className="inline-flex items-center gap-0.5 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-          <Clock size={7} />{open} Open
-        </span>
-      </div>
-
-      {/* List */}
-      <div className="flex-1 overflow-y-auto divide-y divide-kyc-neutral-100 min-h-0">
-        {anns.map(ann => {
-          const sc = S_CFG[ann.status];
-          return (
-            <button
-              key={ann.id}
-              onClick={() => onSelect(ann.id)}
-              className={`w-full text-left px-2 py-2 hover:bg-kyc-neutral-50 transition-colors ${ann.id === activeId ? "bg-kyc-neutral-50 border-l-2 border-kyc-blue" : ""}`}
-            >
-              <div className="flex items-start gap-1.5">
-                <span className={`shrink-0 mt-0.5 w-[14px] h-[14px] rounded-full text-[8px] font-bold flex items-center justify-center ${R_BADGE[ann.riskFlag]}`}>
-                  {ann.number}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-semibold text-kyc-neutral-800 leading-tight">{ISSUE_LBL[ann.type]}</p>
-                  <p className="text-[8.5px] text-kyc-neutral-600 truncate mt-0.5">{ann.field}</p>
-                  <span className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full border text-[8px] font-semibold mt-1 ${sc.cls}`}>
-                    {sc.icon}{sc.l}
-                  </span>
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

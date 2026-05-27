@@ -121,25 +121,6 @@ const priorityBadgeStyle: Record<PriorityLevel, string> = {
   Low:    "bg-ds-green-000 text-ds-green-700",
 };
 
-const riskTextColor: Record<string, string> = {
-  Elevated: "text-ds-red-700",
-  Moderate: "text-kyc-neutral-700",
-  Minimal:  "text-ds-green-700",
-};
-
-const stageStyle: Record<StageValue, string> = {
-  "From Analyst":         "text-ds-neutral-700 bg-ds-neutral-100",
-  "Reworked by Analyst":  "text-ds-dark-blue-600 bg-ds-dark-blue-000",
-  "Escalated":            "text-ds-red-700 bg-ds-red-000",
-};
-
-const qaStatusStyle: Record<QaStatus, string> = {
-  "Ready for QA":     "text-ds-neutral-600",
-  "QA In Progress":   "text-ds-dark-blue-600",
-  "Rework Requested": "text-ds-red-700",
-  "Final Closure":    "text-ds-green-700",
-};
-
 // ─── Sort ─────────────────────────────────────────────────────────
 const RISK_ORDER: Record<string, number> = { Minimal: 0, Moderate: 1, Elevated: 2 };
 

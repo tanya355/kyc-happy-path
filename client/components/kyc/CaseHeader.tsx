@@ -1,71 +1,11 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Send, Building2, Users, CheckCircle2, X, Check, AlertOctagon, XCircle, Info, AlertTriangle, FileText, Bot, Loader2, CheckCircle, AlertCircle, ChevronDown, ChevronUp, ClipboardList, Mail } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Send, CheckCircle2, X, Check, AlertOctagon, XCircle, Info, AlertTriangle, Bot, Loader2, ChevronDown, ChevronUp, ClipboardList, Mail } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@kpmg-us/ad-design-lib";
 import { DrgModal } from "./DrgModal";
-import { exceptions } from "./ExceptionsPanel";
-import { CaseDocumentModal } from "./CaseDocumentModal";
 import { CaseAgenticReasoningModal } from "./CaseAgenticReasoningModal";
-
-const ENTITY_CASE_NUMBERS: Record<string, string> = {
-  "BlackRock Advisors":      "KYC-28821",
-  "BlackRock Institutional": "KYC-28834",
-  "Entity 13":               "KYC-29107",
-};
-
-const SELECTED_ENTITIES = ["BlackRock Advisors", "BlackRock Institutional", "Entity 13"];
-
-function exportCsv() {
-  const rows: string[][] = [];
-
-  // Section 1 — Case metadata
-  rows.push(["CASE METADATA"]);
-  rows.push(["DRG", "BlackRock DRG Group"]);
-  rows.push(["Risk", "Elevated"]);
-  rows.push(["Priority", "High"]);
-  rows.push(["Customer Type", "Complex Ownership"]);
-  rows.push(["Jurisdiction", "USA"]);
-  rows.push(["Due Date", "Apr 25, 2026"]);
-  rows.push([]);
-
-  // Section 2 — Selected entities
-  rows.push(["SELECTED ENTITIES"]);
-  rows.push(["Entity", "Case Number"]);
-  SELECTED_ENTITIES.forEach(name => {
-    rows.push([name, ENTITY_CASE_NUMBERS[name] ?? ""]);
-  });
-  rows.push([]);
-
-  // Section 3 — Exceptions
-  rows.push(["EXCEPTIONS"]);
-  rows.push(["#", "Entity", "Case Number", "Title", "Type", "Confidence", "Description", "Status"]);
-  exceptions.forEach((ex, i) => {
-    rows.push([
-      String(i + 1),
-      ex.entity,
-      ENTITY_CASE_NUMBERS[ex.entity] ?? "",
-      ex.title,
-      ex.type,
-      `${ex.confidence}%`,
-      ex.body,
-      ex.status,
-    ]);
-  });
-
-  const csv = rows
-    .map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-    .join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `KYC-Case-Export-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 const drgEntities = [
   "BlackRock DRG Group",
@@ -74,13 +14,6 @@ const drgEntities = [
   "BlackRock Global Equity Fund",
   "Vanguard Group",
 ];
-
-const drgMeta = {
-  industry: "Asset Management",
-  region: "North America",
-  entities: 12,
-  clientSince: "2015",
-};
 
 export const ENTITY_META: Record<string, {
   risk: string; riskLevel: "elevated" | "moderate" | "low";
@@ -563,62 +496,6 @@ function EscalationModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function SuccessModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="success-modal-title"
-    >
-      <div
-        className="absolute inset-0"
-        style={{ background: "rgba(0,16,48,0.5)" }}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div
-        className="relative w-full max-w-sm mx-4 rounded-xl overflow-hidden"
-        style={{
-          background: "var(--color-base-white)",
-          border: "1px solid var(--color-neutral-200)",
-          boxShadow: "var(--shadow-dialog, 0 8px 32px rgba(0,0,0,0.14))",
-        }}
-      >
-        {/* DS green accent — signals success */}
-        <div style={{ height: 3, background: "var(--color-green-700)", flexShrink: 0 }} aria-hidden="true" />
-
-        <div className="px-6 py-6 flex flex-col items-center text-center">
-          {/* Icon */}
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center mb-4"
-            style={{ background: "var(--color-green-000, #f0fdf4)", border: "1.5px solid var(--color-green-200, #bbf7d0)" }}
-            aria-hidden="true"
-          >
-            <CheckCircle2 size={24} style={{ color: "var(--color-green-700)" }} aria-hidden="true" />
-          </div>
-
-          <h2 id="success-modal-title" className="text-[16px] font-bold text-ds-neutral-900 mb-2">
-            Case Submitted
-          </h2>
-          <p className="text-[13px] text-ds-neutral-600 leading-relaxed mb-6">
-            Case <span className="font-semibold text-ds-neutral-800">#KYC-2024-8821</span> has been sent to the QA review queue successfully.
-          </p>
-
-          <div className="w-full">
-            <Button
-              variant="filled"
-              size="small"
-              label="Return to Dashboard"
-              onClick={onClose}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Subway line ───────────────────────────────────────────────────────
 
 const STAGES = [
@@ -998,7 +875,6 @@ function AgentReviewModal({ onClose, onAllActioned }: { onClose: () => void; onA
 
 export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAuditEntry, onOpenAuditLog, onSubmitComplete, reachOutCount = 0, onOpenReachOuts }: CaseHeaderProps) {
   const entityMeta = focusedEntity ? ENTITY_META[focusedEntity] : null;
-  const allResolved = resolvedCount >= totalExceptions;
   const [drgValue] = useState(drgEntities[0]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showEscalate, setShowEscalate] = useState(false);
@@ -1034,8 +910,6 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
       });
     }, 2800);
   };
-
-  const pct = Math.round((resolvedCount / totalExceptions) * 100);
 
   const handleConfirm = () => {
     // Log audit entry and notify parent — modal stays open to show complete phase
