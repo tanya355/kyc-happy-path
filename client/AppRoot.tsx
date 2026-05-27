@@ -15,14 +15,6 @@ import QaWorkHub from "./pages/QaWorkHub";
 import WorkQueue from "./pages/work-queue/index";
 import NotFound from "./pages/NotFound";
 
-// ── Architecture-compliant views/ pages ──
-import ProfileView        from "./views/pages/profile/index";
-import AnalystDashboardV2 from "./views/pages/analyst-dashboard/index";
-import AnalystWorkQueue   from "./views/pages/analyst-work-queue/index";
-import QaWorkQueueV2      from "./views/pages/qa-work-queue/index";
-import ReportsV2          from "./views/pages/reports/index";
-import EvidenceLockerV2   from "./views/pages/evidence-locker/index";
-
 const queryClient = new QueryClient();
 
 export function AppRoot() {
@@ -42,14 +34,6 @@ export function AppRoot() {
             <Route path="/analyst-dashboard" element={<AnalystDashboard />} />
             <Route path="/qa-work-hub" element={<QaWorkHub />} />
             <Route path="/work-queue"  element={<WorkQueue />} />
-
-            {/* ── Architecture v2 routes (views/ pages) ── */}
-            <Route path="/v2/profile"            element={<ProfileView />} />
-            <Route path="/v2/analyst-dashboard"  element={<AnalystDashboardV2 />} />
-            <Route path="/v2/analyst-work-queue" element={<AnalystWorkQueue />} />
-            <Route path="/v2/qa-work-queue"      element={<QaWorkQueueV2 />} />
-            <Route path="/v2/reports"            element={<ReportsV2 />} />
-            <Route path="/v2/evidence-locker"    element={<EvidenceLockerV2 />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -1017,21 +1017,18 @@ function DecisionPanel({ decision }: { decision: ItemDecision }) {
             variant="filled"
             size="small"
             label="Resolved"
-            showIconLeading
             icon={<Check size={13} />}
           />
           <Button
             variant="outlined"
             size="small"
             label="Confirm & Sign off"
-            showIconLeading
             icon={<CheckCircle size={13} />}
           />
           <Button
             variant="text"
             size="small"
             label="Return to Revision"
-            showIconLeading
             icon={<RotateCcw size={13} />}
           />
         </div>

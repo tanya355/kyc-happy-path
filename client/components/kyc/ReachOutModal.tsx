@@ -407,7 +407,6 @@ export function ReachOutModal({ reachOuts, onClose, onSent }: ReachOutModalProps
                   variant="filled"
                   size="small"
                   label="Generate Draft Email"
-                  showIconLeading
                   icon={<Mail size={12} />}
                   disabled={pending.length === 0}
                   onClick={handleGenerateDraft}
@@ -424,7 +423,6 @@ export function ReachOutModal({ reachOuts, onClose, onSent }: ReachOutModalProps
                   variant="filled"
                   size="small"
                   label="Send for Approval"
-                  showIconLeading
                   icon={<Send size={12} />}
                   onClick={handleSend}
                 />

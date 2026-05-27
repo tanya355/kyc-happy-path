@@ -368,7 +368,7 @@ function ApprovalModal({
             {/* Footer actions */}
             <div className="shrink-0 px-6 py-4 border-t flex gap-3 [&>*]:flex-1" style={{ borderColor: "var(--color-neutral-200)" }}>
               {onOpenAuditLog && (
-                <Button variant="outlined" size="small" label="View Audit Log" showIconLeading icon={<ClipboardList size={12} />} onClick={onOpenAuditLog} />
+                <Button variant="outlined" size="small" label="View Audit Log" icon={<ClipboardList size={12} />} onClick={onOpenAuditLog} />
               )}
               <Button variant="filled" size="small" label="Return to Queue" onClick={onClose} />
             </div>
@@ -1161,7 +1161,6 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
                   variant="text"
                   size="small"
                   label="Cancel"
-                  showIconLeading
                   icon={<XCircle size={13} />}
                   onClick={() => navigate("/dashboard")}
                 />
@@ -1170,7 +1169,6 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
                     variant="text"
                     size="small"
                     label="Audit Log"
-                    showIconLeading
                     icon={<ClipboardList size={13} />}
                     onClick={onOpenAuditLog}
                   />
@@ -1181,7 +1179,6 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
                       variant="text"
                       size="small"
                       label="Reach Outs"
-                      showIconLeading
                       icon={<Mail size={12} aria-hidden />}
                       onClick={onOpenReachOuts}
                       aria-label={`Reach Outs — ${reachOutCount} pending`}
@@ -1207,7 +1204,6 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
                   variant="outlined"
                   size="small"
                   label={agentRunning ? "Running…" : "Agent Review"}
-                  showIconLeading
                   icon={agentRunning ? <Loader2 size={12} className="animate-spin" aria-hidden /> : <Bot size={12} aria-hidden />}
                   disabled={agentRunning}
                   onClick={runAgentReview}
