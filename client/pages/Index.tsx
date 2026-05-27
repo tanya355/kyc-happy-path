@@ -1,8 +1,7 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { X, Maximize2, ChevronLeft, ExternalLink } from "lucide-react";
 import { TopNav } from "@/components/kyc/TopNav";
-import { StaticWisps } from "@/components/kyc/StaticWisps";
 import { CaseHeader, CaseStatusBar, ENTITY_META } from "@/components/kyc/CaseHeader";
 import { ExceptionsPanel } from "@/components/kyc/ExceptionsPanel";
 import { AiReasoningPanel } from "@/components/kyc/AiReasoningPanel";

@@ -1,72 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Send, Building2, Users, CheckCircle2, X, Check, AlertOctagon, XCircle, Info, AlertTriangle, FileText, Bot, Loader2, CheckCircle, AlertCircle, ChevronDown, ChevronUp, ClipboardList, Mail, Play } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Send, CheckCircle2, X, Check, AlertOctagon, XCircle, Info, AlertTriangle, Bot, Loader2, ChevronDown, ChevronUp, ClipboardList, Mail } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@kpmg-us/ad-design-lib";
 import { DrgModal } from "./DrgModal";
-import { exceptions } from "./ExceptionsPanel";
-import { CaseDocumentModal } from "./CaseDocumentModal";
 import { CaseAgenticReasoningModal } from "./CaseAgenticReasoningModal";
-import { AVAILABLE_AGENTS } from "./RunAgentsModal";
-
-const ENTITY_CASE_NUMBERS: Record<string, string> = {
-  "BlackRock Advisors":      "KYC-28821",
-  "BlackRock Institutional": "KYC-28834",
-  "Entity 13":               "KYC-29107",
-};
-
-const SELECTED_ENTITIES = ["BlackRock Advisors", "BlackRock Institutional", "Entity 13"];
-
-function exportCsv() {
-  const rows: string[][] = [];
-
-  // Section 1 — Case metadata
-  rows.push(["CASE METADATA"]);
-  rows.push(["DRG", "BlackRock DRG Group"]);
-  rows.push(["Risk", "Elevated"]);
-  rows.push(["Priority", "High"]);
-  rows.push(["Customer Type", "Complex Ownership"]);
-  rows.push(["Jurisdiction", "USA"]);
-  rows.push(["Due Date", "Apr 25, 2026"]);
-  rows.push([]);
-
-  // Section 2 — Selected entities
-  rows.push(["SELECTED ENTITIES"]);
-  rows.push(["Entity", "Case Number"]);
-  SELECTED_ENTITIES.forEach(name => {
-    rows.push([name, ENTITY_CASE_NUMBERS[name] ?? ""]);
-  });
-  rows.push([]);
-
-  // Section 3 — Exceptions
-  rows.push(["EXCEPTIONS"]);
-  rows.push(["#", "Entity", "Case Number", "Title", "Type", "Confidence", "Description", "Status"]);
-  exceptions.forEach((ex, i) => {
-    rows.push([
-      String(i + 1),
-      ex.entity,
-      ENTITY_CASE_NUMBERS[ex.entity] ?? "",
-      ex.title,
-      ex.type,
-      `${ex.confidence}%`,
-      ex.body,
-      ex.status,
-    ]);
-  });
-
-  const csv = rows
-    .map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-    .join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `KYC-Case-Export-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 const drgEntities = [
   "BlackRock DRG Group",
@@ -75,13 +14,6 @@ const drgEntities = [
   "BlackRock Global Equity Fund",
   "Vanguard Group",
 ];
-
-const drgMeta = {
-  industry: "Asset Management",
-  region: "North America",
-  entities: 12,
-  clientSince: "2015",
-};
 
 export const ENTITY_META: Record<string, {
   risk: string; riskLevel: "elevated" | "moderate" | "low";
@@ -124,8 +56,6 @@ interface CaseHeaderProps {
   onSubmitComplete?: () => void;
   reachOutCount?: number;
   onOpenReachOuts?: () => void;
-  onAgentReviewReady?: () => void;
-  onRunAgents?: (agentIds: string[]) => void;
 }
 
 type SubmitPhase = "confirm" | "processing" | "complete";
@@ -566,62 +496,6 @@ function EscalationModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function SuccessModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="success-modal-title"
-    >
-      <div
-        className="absolute inset-0"
-        style={{ background: "rgba(0,16,48,0.5)" }}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div
-        className="relative w-full max-w-sm mx-4 rounded-xl overflow-hidden"
-        style={{
-          background: "var(--color-base-white)",
-          border: "1px solid var(--color-neutral-200)",
-          boxShadow: "var(--shadow-dialog, 0 8px 32px rgba(0,0,0,0.14))",
-        }}
-      >
-        {/* DS green accent — signals success */}
-        <div style={{ height: 3, background: "var(--color-green-700)", flexShrink: 0 }} aria-hidden="true" />
-
-        <div className="px-6 py-6 flex flex-col items-center text-center">
-          {/* Icon */}
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center mb-4"
-            style={{ background: "var(--color-green-000, #f0fdf4)", border: "1.5px solid var(--color-green-200, #bbf7d0)" }}
-            aria-hidden="true"
-          >
-            <CheckCircle2 size={24} style={{ color: "var(--color-green-700)" }} aria-hidden="true" />
-          </div>
-
-          <h2 id="success-modal-title" className="text-[16px] font-bold text-ds-neutral-900 mb-2">
-            Case Submitted
-          </h2>
-          <p className="text-[13px] text-ds-neutral-600 leading-relaxed mb-6">
-            Case <span className="font-semibold text-ds-neutral-800">#KYC-2024-8821</span> has been sent to the QA review queue successfully.
-          </p>
-
-          <div className="w-full">
-            <Button
-              variant="filled"
-              size="small"
-              label="Return to Dashboard"
-              onClick={onClose}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Subway line ───────────────────────────────────────────────────────
 
 const STAGES = [
@@ -999,41 +873,17 @@ function AgentReviewModal({ onClose, onAllActioned }: { onClose: () => void; onA
   );
 }
 
-export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAuditEntry, onOpenAuditLog, onSubmitComplete, reachOutCount = 0, onOpenReachOuts, onAgentReviewReady, onRunAgents }: CaseHeaderProps) {
+export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAuditEntry, onOpenAuditLog, onSubmitComplete, reachOutCount = 0, onOpenReachOuts }: CaseHeaderProps) {
   const entityMeta = focusedEntity ? ENTITY_META[focusedEntity] : null;
-  const allResolved = resolvedCount >= totalExceptions;
   const [drgValue] = useState(drgEntities[0]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showEscalate, setShowEscalate] = useState(false);
   const [showDrgModal, setShowDrgModal] = useState(false);
   const [agentRunning, setAgentRunning] = useState(false);
+  const [showAgentReview, setShowAgentReview] = useState(false);
   const [agentReviewComplete, setAgentReviewComplete] = useState(false);
   const [showCaseReasoning, setShowCaseReasoning] = useState(false);
-  const [agentsDropdownOpen, setAgentsDropdownOpen] = useState(false);
-  const [selectedAgents, setSelectedAgents] = useState<Set<string>>(
-    new Set(AVAILABLE_AGENTS.map(a => a.id))
-  );
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!agentsDropdownOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setAgentsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [agentsDropdownOpen]);
-
-  const toggleAgent = (id: string) =>
-    setSelectedAgents(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
 
   const runAgentReview = () => {
     if (agentRunning) return;
@@ -1042,8 +892,7 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
     setTimeout(() => {
       setAgentRunning(false);
       toast.dismiss("agent-review");
-      onAgentReviewReady?.();
-      setAgentReviewComplete(true);
+      setShowAgentReview(true);
       onAuditEntry?.({
         id: `agent-review-${Date.now()}`,
         timestamp: new Date(),
@@ -1061,8 +910,6 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
       });
     }, 2800);
   };
-
-  const pct = Math.round((resolvedCount / totalExceptions) * 100);
 
   const handleConfirm = () => {
     // Log audit entry and notify parent — modal stays open to show complete phase
@@ -1094,6 +941,9 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
       )}
       {showDrgModal && (
         <DrgModal onClose={() => setShowDrgModal(false)} />
+      )}
+      {showAgentReview && (
+        <AgentReviewModal onClose={() => setShowAgentReview(false)} onAllActioned={() => setAgentReviewComplete(true)} />
       )}
       {showCaseReasoning && (
         <CaseAgenticReasoningModal onClose={() => setShowCaseReasoning(false)} />
@@ -1181,150 +1031,13 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
             <div className="shrink-0 self-center flex items-center gap-3">
               {/* Secondary actions */}
               <div className="flex items-center gap-1">
-                {/* Run Agents dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  {/* Trigger — DS outlined small button style */}
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    label="Run Agents"
-                    showIconTrailing
-                    icon={agentRunning
-                      ? <Loader2 size={12} className="animate-spin" aria-hidden />
-                      : <ChevronDown size={11} aria-hidden />}
-                    onClick={() => setAgentsDropdownOpen(o => !o)}
-                    aria-expanded={agentsDropdownOpen}
-                    aria-haspopup="true"
-                  />
-
-                  {agentsDropdownOpen && (
-                    <div
-                      className="absolute left-0 top-full mt-1 z-[350] flex flex-col bg-white overflow-hidden"
-                      style={{
-                        width: 296,
-                        border: "1px solid var(--color-neutral-200)",
-                        borderRadius: "var(--corner-200)",
-                        boxShadow: "var(--shadow-400)",
-                      }}
-                    >
-                      {/* Section header */}
-                      <div
-                        className="px-4 py-2.5"
-                        style={{ borderBottom: "1px solid var(--color-neutral-100)", background: "var(--color-neutral-050)" }}
-                      >
-                        <p
-                          className="text-[9px] font-bold uppercase tracking-widest"
-                          style={{ color: "var(--color-neutral-500)" }}
-                        >
-                          Select Agents to Run
-                        </p>
-                      </div>
-
-                      {/* Agent checkboxes */}
-                      <div className="px-2 py-1.5">
-                        {AVAILABLE_AGENTS.map(agent => {
-                          const checked = selectedAgents.has(agent.id);
-                          return (
-                            <label
-                              key={agent.id}
-                              className="flex items-center gap-2.5 px-2 py-1.5 rounded cursor-pointer transition-colors"
-                              style={{ background: "transparent" }}
-                              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--color-neutral-050)"; }}
-                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                            >
-                              <div
-                                className="w-4 h-4 flex items-center justify-center rounded shrink-0 border transition-colors"
-                                style={{
-                                  borderColor: checked ? "var(--color-dark-blue-600)" : "var(--color-neutral-300)",
-                                  background: checked ? "var(--color-dark-blue-600)" : "white",
-                                }}
-                              >
-                                {checked && (
-                                  <svg width="8" height="8" viewBox="0 0 10 8" fill="none">
-                                    <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                )}
-                              </div>
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => toggleAgent(agent.id)}
-                                className="sr-only"
-                              />
-                              <div className="min-w-0">
-                                <p className="text-[11px] font-medium leading-tight" style={{ color: "var(--color-neutral-800)" }}>
-                                  {agent.name}
-                                </p>
-                                <p className="text-[10px] leading-snug mt-0.5" style={{ color: "var(--color-neutral-500)" }}>
-                                  {agent.description}
-                                </p>
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-
-                      {/* Run footer */}
-                      <div
-                        className="px-3 py-2.5 flex items-center justify-between"
-                        style={{ borderTop: "1px solid var(--color-neutral-100)", background: "var(--color-neutral-050)" }}
-                      >
-                        <span className="text-[10px]" style={{ color: "var(--color-neutral-500)" }}>
-                          {selectedAgents.size} of {AVAILABLE_AGENTS.length} selected
-                        </span>
-                        <Button
-                          variant="filled"
-                          size="small"
-                          label={`Run ${selectedAgents.size} Agent${selectedAgents.size !== 1 ? "s" : ""}`}
-                          icon={<Play size={11} />}
-                          disabled={selectedAgents.size === 0}
-                          onClick={() => { onRunAgents?.(Array.from(selectedAgents)); setAgentsDropdownOpen(false); }}
-                        />
-                      </div>
-
-                      {/* Divider */}
-                      <div style={{ height: 1, background: "var(--color-neutral-200)" }} />
-
-                      {/* Agent Review section */}
-                      <div
-                        className="px-4 py-2"
-                        style={{ background: "var(--color-neutral-050)", borderTop: "1px solid var(--color-neutral-100)" }}
-                      >
-                        <p
-                          className="text-[9px] font-bold uppercase tracking-widest mb-1.5"
-                          style={{ color: "var(--color-neutral-500)" }}
-                        >
-                          Review
-                        </p>
-                        <button
-                          onClick={() => { setAgentsDropdownOpen(false); runAgentReview(); }}
-                          disabled={agentRunning}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-colors"
-                          style={{ background: "transparent" }}
-                          onMouseEnter={e => { if (!agentRunning) (e.currentTarget as HTMLElement).style.background = "var(--color-neutral-100)"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                        >
-                          <div
-                            className="w-5 h-5 rounded flex items-center justify-center shrink-0"
-                            style={{ background: "var(--color-dark-blue-000)", border: "1px solid var(--color-dark-blue-100)" }}
-                          >
-                            {agentRunning
-                              ? <Loader2 size={10} className="animate-spin" style={{ color: "var(--color-dark-blue-600)" }} />
-                              : <Bot size={10} style={{ color: "var(--color-dark-blue-600)" }} />}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-semibold" style={{ color: agentRunning ? "var(--color-neutral-400)" : "var(--color-neutral-800)" }}>
-                              {agentRunning ? "Running review…" : "Agent Review"}
-                            </p>
-                            <p className="text-[10px]" style={{ color: "var(--color-neutral-500)" }}>
-                              Review analyst decisions against agent analysis
-                            </p>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <Button
+                  variant="text"
+                  size="small"
+                  label="Cancel"
+                  icon={<XCircle size={13} />}
+                  onClick={() => navigate("/dashboard")}
+                />
                 {onOpenAuditLog && (
                   <Button
                     variant="text"
@@ -1362,11 +1075,13 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
               {/* Primary actions */}
               <div className="flex items-center gap-2 case-header-actions">
                 <Button
-                  variant="text"
+                  variant="outlined"
                   size="small"
-                  label="Cancel"
-                  icon={<XCircle size={13} />}
-                  onClick={() => navigate("/dashboard")}
+                  label={agentRunning ? "Running…" : "Agent Review"}
+                  icon={agentRunning ? <Loader2 size={12} className="animate-spin" aria-hidden /> : <Bot size={12} aria-hidden />}
+                  disabled={agentRunning}
+                  onClick={runAgentReview}
+                  aria-label="Run agent review of analyst work"
                 />
                 <Button
                   variant="outlined"

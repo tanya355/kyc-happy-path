@@ -1,4 +1,4 @@
-import { AlertCircle, AlertTriangle, FileWarning, CheckCircle2, Building2 } from "lucide-react";
+import { CheckCircle2, Building2 } from "lucide-react";
 
 const ENTITY_CASE_NUMBERS: Record<string, string> = {
   "BlackRock Advisors":      "KYC-28821",
@@ -63,17 +63,6 @@ export const exceptions: Exception[] = [
     derivation: "agent",
   },
 ];
-
-const typeIcon = (type: Exception["type"]) => {
-  switch (type) {
-    case "missing-doc":
-      return <FileWarning size={13} className="text-ds-yellow-700 shrink-0" />;
-    case "discrepancy":
-      return <AlertCircle size={13} className="text-ds-red-700 shrink-0" />;
-    default:
-      return <AlertTriangle size={13} className="text-ds-red-700 shrink-0" />;
-  }
-};
 
 interface ExceptionsPanelProps {
   activeIdx: number;

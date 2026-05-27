@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronRight, ChevronDown, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
-import { TableFilters } from "./FilterPanel";
+import { TableFilters, EMPTY_FILTERS } from "./FilterPanel";
 
 // ─── Types ────────────────────────────────────────────────────────
 type RiskLevel    = "Elevated" | "Moderate" | "Minimal";
@@ -121,25 +121,6 @@ const priorityBadgeStyle: Record<PriorityLevel, string> = {
   Low:    "bg-ds-green-000 text-ds-green-700",
 };
 
-const riskTextColor: Record<string, string> = {
-  Elevated: "text-ds-red-700",
-  Moderate: "text-kyc-neutral-700",
-  Minimal:  "text-ds-green-700",
-};
-
-const stageStyle: Record<StageValue, string> = {
-  "From Analyst":         "text-ds-neutral-700 bg-ds-neutral-100",
-  "Reworked by Analyst":  "text-ds-dark-blue-600 bg-ds-dark-blue-000",
-  "Escalated":            "text-ds-red-700 bg-ds-red-000",
-};
-
-const qaStatusStyle: Record<QaStatus, string> = {
-  "Ready for QA":     "text-ds-neutral-600",
-  "QA In Progress":   "text-ds-dark-blue-600",
-  "Rework Requested": "text-ds-red-700",
-  "Final Closure":    "text-ds-green-700",
-};
-
 // ─── Sort ─────────────────────────────────────────────────────────
 const RISK_ORDER: Record<string, number> = { Minimal: 0, Moderate: 1, Elevated: 2 };
 
@@ -172,7 +153,7 @@ export function QaDrgTable({
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const setSelected = onSelectionChange;
 
-  const activeFilters = filters ?? { entity: "", dueDateFrom: "", dueDateTo: "", jurisdictions: [], priorities: [], riskRatings: [] };
+  const activeFilters: TableFilters = filters ?? EMPTY_FILTERS;
 
   const filteredGroups = QA_DRG_GROUPS
     .filter(g => activeFilters.priorities.length === 0 || activeFilters.priorities.includes(g.priority.level))
@@ -180,7 +161,6 @@ export function QaDrgTable({
       ...g,
       entities: g.entities.filter(e => {
         if (activeFilters.entity && !e.name.toLowerCase().includes(activeFilters.entity.toLowerCase())) return false;
-        if (activeFilters.riskRatings.length > 0 && !activeFilters.riskRatings.includes(e.riskRating)) return false;
         return true;
       }),
     }))

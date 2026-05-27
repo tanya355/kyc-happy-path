@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import {
-  X, CheckCircle2, AlertTriangle, FileText, Sparkles, Shield,
+  X, CheckCircle2, AlertTriangle, FileText, Sparkles,
   Clock, ChevronDown, ChevronRight, ExternalLink, AlertCircle,
-  Building2, Database, BarChart2,
+  Building2,
 } from "lucide-react";
 import { Button } from "@kpmg-us/ad-design-lib";
-import { AttrRow, ENTITY_ATTRS, ROOT_ATTRS, getAttrReasoning } from "./ContentTreeCanvas";
+import { AttrRow, ENTITY_ATTRS, getAttrReasoning } from "./ContentTreeCanvas";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -88,7 +88,7 @@ const ENTITY_DETAIL_META: Record<string, EntityMeta> = {
       { label: "Authorized Signatory Conflict", kind: "conflict" },
       { label: "Sanctions Screening: Cleared", kind: "clear" },
     ],
-    evidenceBase: ["Fund Charter — BlackRock Institutional Trust Co.", "Refinitiv Sanctions Database (Nov 2024)", "KYC Workflow System — case records"],
+    evidenceBase: ["Fund Charter — BlackRock Institutional Trust Co.", "Refinitiv Sanctions Database (Nov 2024)", "KPMG Forge — KYC workflow records"],
   },
   "Entity 13": {
     key: "entity13",
@@ -198,8 +198,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-[9px] font-bold tracking-widest uppercase mb-2" style={{ color: "var(--color-neutral-500)" }}>{children}</p>;
 }
 
-function ConfBar({ pct, riskLevel }: { pct: number; riskLevel?: string }) {
-  const color = pct >= 95 ? "var(--color-green-700)" : pct >= 80 ? "#d97706" : "var(--color-red-700)";
+function ConfBar({ pct }: { pct: number; riskLevel?: string }) {
+  const color = pct >= 85 ? "var(--color-green-500)" : pct >= 60 ? "var(--color-yellow-500)" : "var(--color-red-500)";
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
@@ -215,7 +215,7 @@ function ConfBar({ pct, riskLevel }: { pct: number; riskLevel?: string }) {
 
 // ─── Tab: Overview ────────────────────────────────────────────────
 
-function OverviewTab({ entityName, meta, attrs }: { entityName: string; meta: EntityMeta; attrs: AttrRow[] }) {
+function OverviewTab({ meta, attrs }: { entityName: string; meta: EntityMeta; attrs: AttrRow[] }) {
   const verified = attrs.filter(a => a.status === "verified").length;
   const conflict = attrs.filter(a => a.status === "conflict").length;
   const missing  = attrs.filter(a => a.status === "missing").length;
@@ -277,7 +277,7 @@ function OverviewTab({ entityName, meta, attrs }: { entityName: string; meta: En
       <div>
         <SectionLabel>Entity Context</SectionLabel>
         <div className="border overflow-hidden" style={{ borderColor: "var(--color-neutral-200)" }}>
-          {contextRows.map(([label, val], i) => (
+          {contextRows.map(([label, val]) => (
             <div key={label} className="flex items-start border-b last:border-0" style={{ borderColor: "var(--color-neutral-100)" }}>
               <div className="w-36 shrink-0 px-3 py-2" style={{ background: "var(--color-neutral-050)" }}>
                 <p className="text-[9px] font-bold tracking-widest uppercase" style={{ color: "var(--color-neutral-500)" }}>{label}</p>
@@ -301,34 +301,21 @@ function AttrStatusDot({ status }: { status?: string }) {
 }
 
 function SourceBadge({ source }: { source: string }) {
-  const cfg: Record<string, { bg: string; text: string; border: string }> = {
-    "Document":      { bg: "var(--color-dark-blue-000)", text: "var(--color-dark-blue-700)", border: "var(--color-dark-blue-100)" },
-    "External Data": { bg: "var(--color-yellow-000)",    text: "var(--color-neutral-700)",  border: "var(--color-yellow-200)" },
-    "Internal Data": { bg: "var(--color-neutral-050)",   text: "var(--color-neutral-600)",  border: "var(--color-neutral-200)" },
+  const cfg: Record<string, string> = {
+    "CRM":         "bg-blue-50 text-blue-700 border-blue-200",
+    "Forge":       "bg-purple-50 text-purple-700 border-purple-200",
+    "Third Party": "bg-orange-50 text-orange-700 border-orange-200",
   };
-  const c = cfg[source] ?? { bg: "#f9fafb", text: "#374151", border: "#d1d5db" };
   return (
-    <span
-      className="inline-flex items-center text-[8px] font-bold px-1.5 py-0.5 rounded border shrink-0"
-      style={{ background: c.bg, color: c.text, borderColor: c.border }}
-    >
-      {source}
+    <span className={`inline-flex items-center text-[8px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${cfg[source] ?? "bg-gray-50 text-gray-600 border-gray-200"}`}>
+      {source === "Third Party" ? "3rd" : source}
     </span>
   );
 }
 
 function AttrRowExpansion({ attr }: { attr: AttrRow }) {
   const r = getAttrReasoning(attr);
-  if (!r) {
-    return (
-      <div className="border-t px-4 py-3" style={{ borderColor: "var(--color-neutral-100)", background: "var(--color-neutral-050)" }}>
-        <p className="text-[10px]" style={{ color: "var(--color-neutral-500)" }}>
-          Sourced from <strong>{attr.sourceSystem}</strong>. No agent reasoning — confidence not applicable for {attr.derivation === "manual" ? "manually entered" : "system-sourced"} data.
-        </p>
-      </div>
-    );
-  }
-  const confColor = r.confidence >= 95 ? "var(--color-green-700)" : r.confidence >= 80 ? "#d97706" : "var(--color-red-700)";
+  const confColor = r.confidence >= 85 ? "var(--color-green-500)" : r.confidence >= 60 ? "var(--color-yellow-500)" : "var(--color-red-500)";
   return (
     <div className="border-t px-4 py-3 space-y-3" style={{ borderColor: "var(--color-neutral-100)", background: "var(--color-neutral-050)" }}>
       {/* Confidence */}

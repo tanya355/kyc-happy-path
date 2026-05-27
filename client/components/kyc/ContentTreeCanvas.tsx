@@ -1,10 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Plus, Minus, Maximize2, CheckCircle2, AlertTriangle, FileText, Users, X, ExternalLink, Info, ChevronDown, ChevronRight, Filter, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Minus, Maximize2, CheckCircle2, AlertTriangle, FileText, X, ExternalLink, ChevronDown, ChevronRight, Filter, Sparkles, Loader2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────
 type ViewMode = "child" | "parent";
-type DataSource = "Document" | "External Data" | "Internal Data";
-type DataDerivation = "agent" | "system" | "manual";
+type DataSource = "CRM" | "Forge" | "Third Party";
 type AttrStatus = "verified" | "conflict" | "missing";
 
 export interface AttrRow {
@@ -12,8 +11,6 @@ export interface AttrRow {
   value: string;
   status?: AttrStatus;
   source: DataSource;
-  sourceSystem: string;       // e.g. "Refinitiv WorldCheck", "Salesforce CRM"
-  derivation: DataDerivation; // agent | system | manual
   group: string;
   lastUpdated?: string;
   notes?: string;
@@ -27,17 +24,19 @@ interface AttrReasoning {
   evidenceSources: string[];
 }
 
-export function getAttrReasoning(attr: AttrRow): AttrReasoning | null {
-  // Only agent-derived attributes carry confidence and reasoning
-  if (attr.derivation !== "agent") return null;
-
+export function getAttrReasoning(attr: AttrRow): AttrReasoning {
   const conf =
     attr.status === "verified"
-      ? attr.source === "External Data" ? 97 : attr.source === "Document" ? 96 : 95
+      ? attr.source === "Third Party" ? 96 : attr.source === "Forge" ? 93 : 90
       : attr.status === "conflict" ? 73
       : 38;
 
-  const src = attr.sourceSystem;
+  const srcLabel: Record<DataSource, string> = {
+    "CRM":         "Salesforce CRM",
+    "Forge":       "KPMG Forge",
+    "Third Party": "Refinitiv / D&B / OFAC",
+  };
+  const src = srcLabel[attr.source];
 
   const steps =
     attr.status === "verified"
@@ -75,152 +74,145 @@ export function getAttrReasoning(attr: AttrRow): AttrReasoning | null {
   return { confidence: conf, whySelected, reasoningSteps: steps, evidenceSources };
 }
 
-// ─── Source type config (collapsed-level badge) ──────────────────
-const SOURCE_CFG: Record<DataSource, { label: string; bg: string; text: string; border: string }> = {
-  "Document":      { label: "Document",      bg: "var(--color-dark-blue-000)", text: "var(--color-dark-blue-700)", border: "var(--color-dark-blue-100)" },
-  "External Data": { label: "External Data", bg: "var(--color-yellow-000)",    text: "var(--color-neutral-700)",  border: "var(--color-yellow-200)"   },
-  "Internal Data": { label: "Internal Data", bg: "var(--color-neutral-050)",   text: "var(--color-neutral-600)",  border: "var(--color-neutral-200)"  },
-};
-
-// ─── Derivation config (visual distinction) ───────────────────────
-const DERIVATION_CFG: Record<DataDerivation, { label: string; bg: string; text: string; border: string }> = {
-  "agent":  { label: "Agent-derived", bg: "var(--color-dark-blue-000)", text: "var(--color-dark-blue-700)", border: "var(--color-dark-blue-200)" },
-  "system": { label: "System record", bg: "var(--color-neutral-050)",   text: "var(--color-neutral-600)",  border: "var(--color-neutral-200)"  },
-  "manual": { label: "Manual entry",  bg: "var(--color-yellow-000)",    text: "var(--color-yellow-800)",   border: "var(--color-yellow-200)"   },
+// ─── Source badge config ──────────────────────────────────────────
+const SOURCE_CFG: Record<DataSource, { label: string; cls: string }> = {
+  "CRM":         { label: "CRM",   cls: "bg-blue-50 text-blue-700 border-blue-200"     },
+  "Forge":       { label: "Forge", cls: "bg-purple-50 text-purple-700 border-purple-200" },
+  "Third Party": { label: "3rd",   cls: "bg-orange-50 text-orange-700 border-orange-200" },
 };
 
 // ─── Parent (DRG Group) attribute data ───────────────────────────
 export const ROOT_ATTRS: AttrRow[] = [
   // Identity & Registration
-  { label: "Legal Entity Type",       value: "Diversified Relationship Group",          status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-11-15", notes: "Classified as DRG per KPMG policy §3.1" },
-  { label: "Industry",                value: "Asset Management",                        status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-  { label: "Jurisdiction",            value: "USA",                                     status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-  { label: "Country of Incorporation",value: "United States of America",                status: "verified",  source: "External Data", sourceSystem: "Companies House / State Registry", derivation: "agent", group: "Identity & Registration",    lastUpdated: "2024-09-12" },
-  { label: "Date Established",        value: "2015",                                    status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-  { label: "LEI Code",                value: "549300DXPX4KHQW5QL37",                   status: "verified",  source: "External Data", sourceSystem: "GLEIF Registry",               derivation: "agent", group: "Identity & Registration",    lastUpdated: "2025-01-03" },
+  { label: "Legal Entity Type",       value: "Diversified Relationship Group",          status: "verified",  source: "Forge",        group: "Identity & Registration",    lastUpdated: "2024-11-15", notes: "Classified as DRG per KPMG policy §3.1" },
+  { label: "Industry",                value: "Asset Management",                        status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+  { label: "Jurisdiction",            value: "USA",                                     status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+  { label: "Country of Incorporation",value: "United States of America",                status: "verified",  source: "Third Party",  group: "Identity & Registration",    lastUpdated: "2024-09-12" },
+  { label: "Date Established",        value: "2015",                                    status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+  { label: "LEI Code",                value: "549300DXPX4KHQW5QL37",                   status: "verified",  source: "Third Party",  group: "Identity & Registration",    lastUpdated: "2025-01-03" },
   // Ownership & Control
-  { label: "Global Ultimate Owner",   value: "BlackRock Inc. (NYSE: BLK)",              status: "verified",  source: "External Data", sourceSystem: "SEC Form 13G / Corporate Registry", derivation: "agent", group: "Ownership & Control",        lastUpdated: "2024-11-20" },
-  { label: "Entity Count",            value: "12",                                      status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Ownership & Control",        lastUpdated: "2024-11-01" },
-  { label: "Ownership Structure",     value: "Wholly Owned Subsidiaries",               status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Ownership & Control",        lastUpdated: "2024-10-15" },
-  { label: "UBO Threshold",           value: "≥ 25% (Policy §2.4)",                    status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Ownership & Control",        lastUpdated: "2024-10-15" },
+  { label: "Global Ultimate Owner",   value: "BlackRock Inc. (NYSE: BLK)",              status: "verified",  source: "Third Party",  group: "Ownership & Control",        lastUpdated: "2024-11-20" },
+  { label: "Entity Count",            value: "12",                                      status: "verified",  source: "Forge",        group: "Ownership & Control",        lastUpdated: "2024-11-01" },
+  { label: "Ownership Structure",     value: "Wholly Owned Subsidiaries",               status: "verified",  source: "CRM",          group: "Ownership & Control",        lastUpdated: "2024-10-15" },
+  { label: "UBO Threshold",           value: "≥ 25% (Policy §2.4)",                    status: "verified",  source: "Forge",        group: "Ownership & Control",        lastUpdated: "2024-10-15" },
   // Compliance & KYC
-  { label: "KYC Refresh Cycle",       value: "Annual",                                  status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2024-11-01" },
-  { label: "CIP Status",              value: "In Progress — 2 attributes pending",      status: "conflict",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2025-04-14", notes: "2 open exceptions require resolution" },
-  { label: "AML Policy Version",      value: "AML-POL-2024-v3",                        status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2024-08-01" },
-  { label: "Open Exceptions",         value: "5 (under review)",                       status: "conflict",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2025-04-15", notes: "See exception panel for details" },
+  { label: "KYC Refresh Cycle",       value: "Annual",                                  status: "verified",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2024-11-01" },
+  { label: "CIP Status",              value: "In Progress — 2 attributes pending",      status: "conflict",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2025-04-14", notes: "2 open exceptions require resolution" },
+  { label: "AML Policy Version",      value: "AML-POL-2024-v3",                        status: "verified",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2024-08-01" },
+  { label: "Open Exceptions",         value: "5 (under review)",                       status: "conflict",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2025-04-15", notes: "See exception panel for details" },
   // Risk & Screening
-  { label: "Sanctions Screening",     value: "Cleared — 2024-11-01",                   status: "verified",  source: "External Data", sourceSystem: "Refinitiv WorldCheck",         derivation: "agent", group: "Risk & Screening",           lastUpdated: "2024-11-01" },
-  { label: "PEP Exposure",            value: "None Identified",                         status: "verified",  source: "External Data", sourceSystem: "Refinitiv WorldCheck",         derivation: "agent", group: "Risk & Screening",           lastUpdated: "2024-11-01" },
-  { label: "Overall Risk Rating",     value: "Medium",                                  status: "verified",  source: "External Data", sourceSystem: "Refinitiv / D&B",              derivation: "agent", group: "Risk & Screening",           lastUpdated: "2025-02-20" },
-  { label: "Adverse Media",           value: "No adverse findings",                     status: "verified",  source: "External Data", sourceSystem: "Refinitiv World-Check",        derivation: "agent", group: "Risk & Screening",           lastUpdated: "2025-04-01" },
+  { label: "Sanctions Screening",     value: "Cleared — 2024-11-01",                   status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2024-11-01" },
+  { label: "PEP Exposure",            value: "None Identified",                         status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2024-11-01" },
+  { label: "Overall Risk Rating",     value: "Medium",                                  status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2025-02-20" },
+  { label: "Adverse Media",           value: "No adverse findings",                     status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2025-04-01" },
   // Financial
-  { label: "AUM (USD)",               value: "$10.5 Trillion",                          status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Financial",                  lastUpdated: "2024-12-31" },
-  { label: "Primary Currency",        value: "USD",                                     status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Financial",                  lastUpdated: "2024-10-01" },
+  { label: "AUM (USD)",               value: "$10.5 Trillion",                          status: "verified",  source: "CRM",          group: "Financial",                  lastUpdated: "2024-12-31" },
+  { label: "Primary Currency",        value: "USD",                                     status: "verified",  source: "CRM",          group: "Financial",                  lastUpdated: "2024-10-01" },
 ];
 
 // ─── Entity attribute data (per entity) ──────────────────────────
 export const ENTITY_ATTRS: Record<string, AttrRow[]> = {
   institutional: [
     // Identity & Registration
-    { label: "Legal Name",                value: "BlackRock Institutional Trust Co.",         status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-    { label: "Registration No.",          value: "BR-INST-4421-US",                           status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-    { label: "Entity Type",               value: "Institutional Investor",                     status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-    { label: "Jurisdiction",              value: "USA",                                        status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-    { label: "State of Incorporation",    value: "Delaware",                                   status: "verified",  source: "External Data", sourceSystem: "Delaware Division of Corporations", derivation: "agent", group: "Identity & Registration",    lastUpdated: "2024-09-12" },
-    { label: "Date Established",          value: "January 15, 2001",                           status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-    { label: "LEI Code",                  value: "5493001KJTIIGC8Y1R12",                       status: "verified",  source: "External Data", sourceSystem: "GLEIF Registry",               derivation: "agent", group: "Identity & Registration",    lastUpdated: "2025-01-03" },
-    { label: "CRD Number",                value: "CRD-INST-8841",                              status: "verified",  source: "External Data", sourceSystem: "SEC EDGAR",                    derivation: "agent", group: "Identity & Registration",    lastUpdated: "2024-11-10" },
+    { label: "Legal Name",                value: "BlackRock Institutional Trust Co.",         status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+    { label: "Registration No.",          value: "BR-INST-4421-US",                           status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+    { label: "Entity Type",               value: "Institutional Investor",                     status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+    { label: "Jurisdiction",              value: "USA",                                        status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+    { label: "State of Incorporation",    value: "Delaware",                                   status: "verified",  source: "Third Party",  group: "Identity & Registration",    lastUpdated: "2024-09-12" },
+    { label: "Date Established",          value: "January 15, 2001",                           status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+    { label: "LEI Code",                  value: "5493001KJTIIGC8Y1R12",                       status: "verified",  source: "Third Party",  group: "Identity & Registration",    lastUpdated: "2025-01-03" },
+    { label: "CRD Number",                value: "CRD-INST-8841",                              status: "verified",  source: "Third Party",  group: "Identity & Registration",    lastUpdated: "2024-11-10" },
     // Ownership & Control
-    { label: "Beneficial Owner",          value: "BlackRock Inc. (>25%)",                      status: "verified",  source: "External Data", sourceSystem: "SEC Form 13G / Corporate Registry", derivation: "agent", group: "Ownership & Control",        lastUpdated: "2024-11-20" },
-    { label: "UBO Percentage",            value: "100% (wholly owned)",                        status: "verified",  source: "External Data", sourceSystem: "SEC Form 13G / Corporate Registry", derivation: "agent", group: "Ownership & Control",        lastUpdated: "2024-11-20" },
-    { label: "Control Type",              value: "Direct Ownership",                           status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Ownership & Control",        lastUpdated: "2024-10-15" },
-    { label: "Parent Entity",             value: "BlackRock DRG Group",                        status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Ownership & Control",        lastUpdated: "2024-10-01" },
-    { label: "Board Composition",         value: "6 members — verified",                       status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Ownership & Control",        lastUpdated: "2025-01-10" },
+    { label: "Beneficial Owner",          value: "BlackRock Inc. (>25%)",                      status: "verified",  source: "Third Party",  group: "Ownership & Control",        lastUpdated: "2024-11-20" },
+    { label: "UBO Percentage",            value: "100% (wholly owned)",                        status: "verified",  source: "Third Party",  group: "Ownership & Control",        lastUpdated: "2024-11-20" },
+    { label: "Control Type",              value: "Direct Ownership",                           status: "verified",  source: "Forge",        group: "Ownership & Control",        lastUpdated: "2024-10-15" },
+    { label: "Parent Entity",             value: "BlackRock DRG Group",                        status: "verified",  source: "CRM",          group: "Ownership & Control",        lastUpdated: "2024-10-01" },
+    { label: "Board Composition",         value: "6 members — verified",                       status: "verified",  source: "Forge",        group: "Ownership & Control",        lastUpdated: "2025-01-10" },
     // Compliance & KYC
-    { label: "CIP Status",                value: "Incomplete — 1 attribute pending",           status: "conflict",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2025-04-14", notes: "Offering Memorandum overdue" },
-    { label: "KYC Status",                value: "In Review",                                  status: "conflict",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2025-04-14" },
-    { label: "Last KYC Review",           value: "2023-09-14",                                 status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2023-09-14" },
-    { label: "Next Review Due",           value: "2024-09-14 (overdue)",                       status: "conflict",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2025-04-01", notes: "Review is 7 months overdue" },
-    { label: "AML Policy Acknowledgment", value: "Confirmed — 2024-01-20",                     status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2024-01-20" },
-    { label: "FATCA Status",              value: "Compliant — W-9 Filed",                      status: "verified",  source: "External Data", sourceSystem: "IRS / OECD Reporting",         derivation: "agent", group: "Compliance & KYC",           lastUpdated: "2024-03-01" },
-    { label: "CRS Reporting",             value: "OECD Compliant",                             status: "verified",  source: "External Data", sourceSystem: "IRS / OECD Reporting",         derivation: "agent", group: "Compliance & KYC",           lastUpdated: "2024-06-01" },
+    { label: "CIP Status",                value: "Incomplete — 1 attribute pending",           status: "conflict",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2025-04-14", notes: "Offering Memorandum overdue" },
+    { label: "KYC Status",                value: "In Review",                                  status: "conflict",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2025-04-14" },
+    { label: "Last KYC Review",           value: "2023-09-14",                                 status: "verified",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2023-09-14" },
+    { label: "Next Review Due",           value: "2024-09-14 (overdue)",                       status: "conflict",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2025-04-01", notes: "Review is 7 months overdue" },
+    { label: "AML Policy Acknowledgment", value: "Confirmed — 2024-01-20",                     status: "verified",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2024-01-20" },
+    { label: "FATCA Status",              value: "Compliant — W-9 Filed",                      status: "verified",  source: "Third Party",  group: "Compliance & KYC",           lastUpdated: "2024-03-01" },
+    { label: "CRS Reporting",             value: "OECD Compliant",                             status: "verified",  source: "Third Party",  group: "Compliance & KYC",           lastUpdated: "2024-06-01" },
     // Risk & Screening
-    { label: "Risk Rating",               value: "Medium",                                     status: "verified",  source: "External Data", sourceSystem: "Refinitiv / D&B",              derivation: "agent", group: "Risk & Screening",           lastUpdated: "2025-02-20" },
-    { label: "Sanctions Screening",       value: "Cleared — 2024-11-01",                       status: "verified",  source: "External Data", sourceSystem: "Refinitiv WorldCheck",         derivation: "agent", group: "Risk & Screening",           lastUpdated: "2024-11-01" },
-    { label: "PEP Screening",             value: "No PEPs identified",                         status: "verified",  source: "External Data", sourceSystem: "Refinitiv WorldCheck",         derivation: "agent", group: "Risk & Screening",           lastUpdated: "2024-11-01" },
-    { label: "Adverse Media",             value: "No adverse findings",                         status: "verified",  source: "External Data", sourceSystem: "Refinitiv World-Check",        derivation: "agent", group: "Risk & Screening",           lastUpdated: "2025-04-01" },
-    { label: "Country Risk",              value: "Low — USA",                                   status: "verified",  source: "External Data", sourceSystem: "D&B Country Insights",         derivation: "agent", group: "Risk & Screening",           lastUpdated: "2025-01-15" },
-    { label: "Industry Risk",             value: "Medium — Asset Management",                   status: "verified",  source: "External Data", sourceSystem: "D&B Industry Risk",            derivation: "agent", group: "Risk & Screening",           lastUpdated: "2025-01-15" },
+    { label: "Risk Rating",               value: "Medium",                                     status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2025-02-20" },
+    { label: "Sanctions Screening",       value: "Cleared — 2024-11-01",                       status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2024-11-01" },
+    { label: "PEP Screening",             value: "No PEPs identified",                         status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2024-11-01" },
+    { label: "Adverse Media",             value: "No adverse findings",                         status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2025-04-01" },
+    { label: "Country Risk",              value: "Low — USA",                                   status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2025-01-15" },
+    { label: "Industry Risk",             value: "Medium — Asset Management",                   status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2025-01-15" },
     // Financial
-    { label: "AUM (USD)",                 value: "$3.2 Trillion",                              status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Financial",                  lastUpdated: "2024-12-31" },
-    { label: "Primary Currency",          value: "USD",                                        status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Financial",                  lastUpdated: "2024-10-01" },
-    { label: "Bank Account",              value: "HSBC — ****4821 (Verified)",                 status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Financial",                  lastUpdated: "2024-11-10" },
-    { label: "SWIFT Code",               value: "MRMDUS33",                                   status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Financial",                  lastUpdated: "2024-11-10" },
-    { label: "Fiscal Year End",           value: "December 31",                                 status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Financial",                  lastUpdated: "2024-10-01" },
+    { label: "AUM (USD)",                 value: "$3.2 Trillion",                              status: "verified",  source: "CRM",          group: "Financial",                  lastUpdated: "2024-12-31" },
+    { label: "Primary Currency",          value: "USD",                                        status: "verified",  source: "CRM",          group: "Financial",                  lastUpdated: "2024-10-01" },
+    { label: "Bank Account",              value: "HSBC — ****4821 (Verified)",                 status: "verified",  source: "Forge",        group: "Financial",                  lastUpdated: "2024-11-10" },
+    { label: "SWIFT Code",               value: "MRMDUS33",                                   status: "verified",  source: "Forge",        group: "Financial",                  lastUpdated: "2024-11-10" },
+    { label: "Fiscal Year End",           value: "December 31",                                 status: "verified",  source: "CRM",          group: "Financial",                  lastUpdated: "2024-10-01" },
     // Authorized Representatives
-    { label: "CEO",                       value: "Martin S. Small",                            status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Representatives",            lastUpdated: "2024-10-01" },
-    { label: "CFO",                       value: "Gary S. Shedlin",                            status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Representatives",            lastUpdated: "2024-10-01" },
-    { label: "Company Secretary",         value: "Rachel Lord",                                 status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Representatives",            lastUpdated: "2024-10-01" },
-    { label: "Authorized Signatory",      value: "Sarah Williams (title conflict)",             status: "conflict",  source: "Document",      sourceSystem: "Fund Charter / Form ADV",      derivation: "agent",  group: "Representatives",            lastUpdated: "2025-04-14", notes: "Title differs across entities" },
-    { label: "Compliance Officer",        value: "Christopher Meade",                          status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Representatives",            lastUpdated: "2024-10-01" },
-    { label: "Legal Counsel",             value: "Simpson Thacher & Bartlett LLP",             status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Representatives",            lastUpdated: "2024-10-01" },
+    { label: "CEO",                       value: "Martin S. Small",                            status: "verified",  source: "CRM",          group: "Representatives",            lastUpdated: "2024-10-01" },
+    { label: "CFO",                       value: "Gary S. Shedlin",                            status: "verified",  source: "CRM",          group: "Representatives",            lastUpdated: "2024-10-01" },
+    { label: "Company Secretary",         value: "Rachel Lord",                                 status: "verified",  source: "CRM",          group: "Representatives",            lastUpdated: "2024-10-01" },
+    { label: "Authorized Signatory",      value: "Sarah Williams (title conflict)",             status: "conflict",  source: "Forge",        group: "Representatives",            lastUpdated: "2025-04-14", notes: "Title differs across entities" },
+    { label: "Compliance Officer",        value: "Christopher Meade",                          status: "verified",  source: "CRM",          group: "Representatives",            lastUpdated: "2024-10-01" },
+    { label: "Legal Counsel",             value: "Simpson Thacher & Bartlett LLP",             status: "verified",  source: "CRM",          group: "Representatives",            lastUpdated: "2024-10-01" },
     // Documents
-    { label: "Certificate of Incorporation", value: "Filed — Delaware (2001)",                status: "verified",  source: "Document",      sourceSystem: "KYC Document Repository",      derivation: "agent",  group: "Documents",                  lastUpdated: "2024-09-01" },
-    { label: "Offering Memorandum",       value: "Not submitted — overdue",                    status: "missing",   source: "Document",      sourceSystem: "KYC Document Repository",      derivation: "agent",  group: "Documents",                  lastUpdated: "2025-04-14", notes: "Required for full validation. Expected Q1 2025." },
-    { label: "Board Resolution",          value: "BR-2024-0847 — Verified",                   status: "verified",  source: "Document",      sourceSystem: "KYC Document Repository",      derivation: "agent",  group: "Documents",                  lastUpdated: "2024-10-15" },
-    { label: "Certificate of Incumbency", value: "Filed — Jan 10, 2026",                      status: "verified",  source: "Document",      sourceSystem: "KYC Document Repository",      derivation: "agent",  group: "Documents",                  lastUpdated: "2026-01-10" },
-    { label: "UBO Declaration",           value: "Signed — Nov 15, 2025",                     status: "verified",  source: "Document",      sourceSystem: "KYC Document Repository",      derivation: "agent",  group: "Documents",                  lastUpdated: "2025-11-15" },
+    { label: "Certificate of Incorporation", value: "Filed — Delaware (2001)",                status: "verified",  source: "Forge",        group: "Documents",                  lastUpdated: "2024-09-01" },
+    { label: "Offering Memorandum",       value: "Not submitted — overdue",                    status: "missing",   source: "Forge",        group: "Documents",                  lastUpdated: "2025-04-14", notes: "Required for full validation. Expected Q1 2025." },
+    { label: "Board Resolution",          value: "BR-2024-0847 — Verified",                   status: "verified",  source: "Forge",        group: "Documents",                  lastUpdated: "2024-10-15" },
+    { label: "Certificate of Incumbency", value: "Filed — Jan 10, 2026",                      status: "verified",  source: "Forge",        group: "Documents",                  lastUpdated: "2026-01-10" },
+    { label: "UBO Declaration",           value: "Signed — Nov 15, 2025",                     status: "verified",  source: "Forge",        group: "Documents",                  lastUpdated: "2025-11-15" },
   ],
   advisors: [
     // Identity & Registration
-    { label: "Legal Name",                value: "BlackRock Advisors LLC",                     status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-    { label: "Registration No.",          value: "BR-ADV-8812-US",                             status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-    { label: "Entity Type",               value: "Registered Investment Adviser",              status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-    { label: "Jurisdiction",              value: "USA",                                        status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-    { label: "State of Incorporation",    value: "New York",                                   status: "verified",  source: "External Data", sourceSystem: "NY Department of State",       derivation: "agent",  group: "Identity & Registration",    lastUpdated: "2024-09-12" },
-    { label: "Date Established",          value: "March 5, 1998",                              status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Identity & Registration",    lastUpdated: "2024-10-01" },
-    { label: "LEI Code",                  value: "549300S9QMG2XIGPNI93",                       status: "verified",  source: "External Data", sourceSystem: "GLEIF Registry",               derivation: "agent",  group: "Identity & Registration",    lastUpdated: "2025-01-03" },
-    { label: "SEC Registration",          value: "801-47710 (Active)",                         status: "verified",  source: "External Data", sourceSystem: "SEC EDGAR",                    derivation: "agent",  group: "Identity & Registration",    lastUpdated: "2024-11-10" },
+    { label: "Legal Name",                value: "BlackRock Advisors LLC",                     status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+    { label: "Registration No.",          value: "BR-ADV-8812-US",                             status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+    { label: "Entity Type",               value: "Registered Investment Adviser",              status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+    { label: "Jurisdiction",              value: "USA",                                        status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+    { label: "State of Incorporation",    value: "New York",                                   status: "verified",  source: "Third Party",  group: "Identity & Registration",    lastUpdated: "2024-09-12" },
+    { label: "Date Established",          value: "March 5, 1998",                              status: "verified",  source: "CRM",          group: "Identity & Registration",    lastUpdated: "2024-10-01" },
+    { label: "LEI Code",                  value: "549300S9QMG2XIGPNI93",                       status: "verified",  source: "Third Party",  group: "Identity & Registration",    lastUpdated: "2025-01-03" },
+    { label: "SEC Registration",          value: "801-47710 (Active)",                         status: "verified",  source: "Third Party",  group: "Identity & Registration",    lastUpdated: "2024-11-10" },
     // Ownership & Control
-    { label: "Beneficial Owner",          value: "BlackRock Inc. (>25%)",                      status: "verified",  source: "External Data", sourceSystem: "SEC Form 13G / Corporate Registry", derivation: "agent", group: "Ownership & Control",        lastUpdated: "2024-11-20" },
-    { label: "UBO Percentage",            value: "100% (wholly owned)",                        status: "verified",  source: "External Data", sourceSystem: "SEC Form 13G / Corporate Registry", derivation: "agent", group: "Ownership & Control",        lastUpdated: "2024-11-20" },
-    { label: "Control Type",              value: "Direct Ownership",                           status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Ownership & Control",        lastUpdated: "2024-10-15" },
-    { label: "Parent Entity",             value: "BlackRock DRG Group",                        status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Ownership & Control",        lastUpdated: "2024-10-01" },
-    { label: "Board Composition",         value: "8 members — verified",                       status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Ownership & Control",        lastUpdated: "2025-01-10" },
+    { label: "Beneficial Owner",          value: "BlackRock Inc. (>25%)",                      status: "verified",  source: "Third Party",  group: "Ownership & Control",        lastUpdated: "2024-11-20" },
+    { label: "UBO Percentage",            value: "100% (wholly owned)",                        status: "verified",  source: "Third Party",  group: "Ownership & Control",        lastUpdated: "2024-11-20" },
+    { label: "Control Type",              value: "Direct Ownership",                           status: "verified",  source: "Forge",        group: "Ownership & Control",        lastUpdated: "2024-10-15" },
+    { label: "Parent Entity",             value: "BlackRock DRG Group",                        status: "verified",  source: "CRM",          group: "Ownership & Control",        lastUpdated: "2024-10-01" },
+    { label: "Board Composition",         value: "8 members — verified",                       status: "verified",  source: "Forge",        group: "Ownership & Control",        lastUpdated: "2025-01-10" },
     // Compliance & KYC
-    { label: "CIP Status",                value: "Incomplete — title mismatch",                status: "conflict",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2025-04-14", notes: "Authorized signatory title discrepancy" },
-    { label: "KYC Status",                value: "In Review",                                  status: "conflict",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2025-04-14" },
-    { label: "Last KYC Review",           value: "2024-01-10",                                 status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2024-01-10" },
-    { label: "Next Review Due",           value: "2025-01-10",                                 status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2024-01-10" },
-    { label: "AML Policy Acknowledgment", value: "Confirmed — 2024-02-14",                     status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Compliance & KYC",           lastUpdated: "2024-02-14" },
-    { label: "FATCA Status",              value: "Compliant — W-9 Filed",                      status: "verified",  source: "External Data", sourceSystem: "IRS / OECD Reporting",         derivation: "agent",  group: "Compliance & KYC",           lastUpdated: "2024-03-01" },
-    { label: "Form ADV Filed",            value: "2024-03-15 (current)",                       status: "verified",  source: "Document",      sourceSystem: "SEC EDGAR",                    derivation: "agent",  group: "Compliance & KYC",           lastUpdated: "2024-03-15" },
+    { label: "CIP Status",                value: "Incomplete — title mismatch",                status: "conflict",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2025-04-14", notes: "Authorized signatory title discrepancy" },
+    { label: "KYC Status",                value: "In Review",                                  status: "conflict",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2025-04-14" },
+    { label: "Last KYC Review",           value: "2024-01-10",                                 status: "verified",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2024-01-10" },
+    { label: "Next Review Due",           value: "2025-01-10",                                 status: "verified",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2024-01-10" },
+    { label: "AML Policy Acknowledgment", value: "Confirmed — 2024-02-14",                     status: "verified",  source: "Forge",        group: "Compliance & KYC",           lastUpdated: "2024-02-14" },
+    { label: "FATCA Status",              value: "Compliant — W-9 Filed",                      status: "verified",  source: "Third Party",  group: "Compliance & KYC",           lastUpdated: "2024-03-01" },
+    { label: "Form ADV Filed",            value: "2024-03-15 (current)",                       status: "verified",  source: "Third Party",  group: "Compliance & KYC",           lastUpdated: "2024-03-15" },
     // Risk & Screening
-    { label: "Risk Rating",               value: "Medium-High",                                status: "verified",  source: "External Data", sourceSystem: "Refinitiv / D&B",              derivation: "agent",  group: "Risk & Screening",           lastUpdated: "2025-02-20" },
-    { label: "Sanctions Screening",       value: "Cleared — 2024-11-01",                       status: "verified",  source: "External Data", sourceSystem: "Refinitiv WorldCheck",         derivation: "agent",  group: "Risk & Screening",           lastUpdated: "2024-11-01" },
-    { label: "PEP Screening",             value: "No PEPs identified",                         status: "verified",  source: "External Data", sourceSystem: "Refinitiv WorldCheck",         derivation: "agent",  group: "Risk & Screening",           lastUpdated: "2024-11-01" },
-    { label: "Adverse Media",             value: "No adverse findings",                         status: "verified",  source: "External Data", sourceSystem: "Refinitiv World-Check",        derivation: "agent",  group: "Risk & Screening",           lastUpdated: "2025-04-01" },
-    { label: "Country Risk",              value: "Low — USA",                                   status: "verified",  source: "External Data", sourceSystem: "D&B Country Insights",         derivation: "agent",  group: "Risk & Screening",           lastUpdated: "2025-01-15" },
-    { label: "Regulatory Inquiries",      value: "None active",                                 status: "verified",  source: "External Data", sourceSystem: "FinCEN / FCA Database",        derivation: "agent",  group: "Risk & Screening",           lastUpdated: "2025-03-01" },
+    { label: "Risk Rating",               value: "Medium-High",                                status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2025-02-20" },
+    { label: "Sanctions Screening",       value: "Cleared — 2024-11-01",                       status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2024-11-01" },
+    { label: "PEP Screening",             value: "No PEPs identified",                         status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2024-11-01" },
+    { label: "Adverse Media",             value: "No adverse findings",                         status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2025-04-01" },
+    { label: "Country Risk",              value: "Low — USA",                                   status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2025-01-15" },
+    { label: "Regulatory Inquiries",      value: "None active",                                 status: "verified",  source: "Third Party",  group: "Risk & Screening",           lastUpdated: "2025-03-01" },
     // Financial
-    { label: "AUM (USD)",                 value: "$1.85 Trillion",                             status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Financial",                  lastUpdated: "2024-12-31" },
-    { label: "Primary Currency",          value: "USD",                                        status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Financial",                  lastUpdated: "2024-10-01" },
-    { label: "Bank Account",              value: "JPMorgan — ****3301 (Verified)",             status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Financial",                  lastUpdated: "2024-11-10" },
-    { label: "SWIFT Code",               value: "CHASUS33",                                   status: "verified",  source: "Internal Data", sourceSystem: "KYC Workflow System",          derivation: "system", group: "Financial",                  lastUpdated: "2024-11-10" },
-    { label: "Fiscal Year End",           value: "December 31",                                 status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Financial",                  lastUpdated: "2024-10-01" },
+    { label: "AUM (USD)",                 value: "$1.85 Trillion",                             status: "verified",  source: "CRM",          group: "Financial",                  lastUpdated: "2024-12-31" },
+    { label: "Primary Currency",          value: "USD",                                        status: "verified",  source: "CRM",          group: "Financial",                  lastUpdated: "2024-10-01" },
+    { label: "Bank Account",              value: "JPMorgan — ****3301 (Verified)",             status: "verified",  source: "Forge",        group: "Financial",                  lastUpdated: "2024-11-10" },
+    { label: "SWIFT Code",               value: "CHASUS33",                                   status: "verified",  source: "Forge",        group: "Financial",                  lastUpdated: "2024-11-10" },
+    { label: "Fiscal Year End",           value: "December 31",                                 status: "verified",  source: "CRM",          group: "Financial",                  lastUpdated: "2024-10-01" },
     // Authorized Representatives
-    { label: "CEO",                       value: "Lawrence D. Fink",                           status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Representatives",            lastUpdated: "2024-10-01" },
-    { label: "CFO",                       value: "Martin S. Small",                            status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Representatives",            lastUpdated: "2024-10-01" },
-    { label: "Company Secretary",         value: "Una McMahon",                                 status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Representatives",            lastUpdated: "2024-10-01" },
-    { label: "Authorized Signatory",      value: "Sarah Williams (title: CEO)",                status: "conflict",  source: "Document",      sourceSystem: "Fund Charter / Form ADV",      derivation: "agent",  group: "Representatives",            lastUpdated: "2025-04-14", notes: "Title 'CEO' conflicts with 'CEO, Global Equity Fund' in Institutional" },
-    { label: "Compliance Officer",        value: "Amy Schioldager",                            status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Representatives",            lastUpdated: "2024-10-01" },
-    { label: "Legal Counsel",             value: "Dechert LLP",                                status: "verified",  source: "Internal Data", sourceSystem: "Salesforce CRM",               derivation: "system", group: "Representatives",            lastUpdated: "2024-10-01" },
+    { label: "CEO",                       value: "Lawrence D. Fink",                           status: "verified",  source: "CRM",          group: "Representatives",            lastUpdated: "2024-10-01" },
+    { label: "CFO",                       value: "Martin S. Small",                            status: "verified",  source: "CRM",          group: "Representatives",            lastUpdated: "2024-10-01" },
+    { label: "Company Secretary",         value: "Una McMahon",                                 status: "verified",  source: "CRM",          group: "Representatives",            lastUpdated: "2024-10-01" },
+    { label: "Authorized Signatory",      value: "Sarah Williams (title: CEO)",                status: "conflict",  source: "Forge",        group: "Representatives",            lastUpdated: "2025-04-14", notes: "Title 'CEO' conflicts with 'CEO, Global Equity Fund' in Institutional" },
+    { label: "Compliance Officer",        value: "Amy Schioldager",                            status: "verified",  source: "CRM",          group: "Representatives",            lastUpdated: "2024-10-01" },
+    { label: "Legal Counsel",             value: "Dechert LLP",                                status: "verified",  source: "CRM",          group: "Representatives",            lastUpdated: "2024-10-01" },
     // Documents
-    { label: "Certificate of Incorporation", value: "Filed — New York (1998)",               status: "verified",  source: "Document",      sourceSystem: "KYC Document Repository",      derivation: "agent",  group: "Documents",                  lastUpdated: "2024-09-01" },
-    { label: "Form ADV Part 1 & 2",       value: "Filed 2024-03-15 — Current",               status: "verified",  source: "Document",      sourceSystem: "SEC EDGAR",                    derivation: "agent",  group: "Documents",                  lastUpdated: "2024-03-15" },
-    { label: "Board Resolution",          value: "BR-2024-0847 — Verified",                   status: "verified",  source: "Document",      sourceSystem: "KYC Document Repository",      derivation: "agent",  group: "Documents",                  lastUpdated: "2024-10-15" },
-    { label: "Certificate of Incumbency", value: "Filed — Jan 10, 2026",                      status: "verified",  source: "Document",      sourceSystem: "KYC Document Repository",      derivation: "agent",  group: "Documents",                  lastUpdated: "2026-01-10" },
-    { label: "UBO Declaration",           value: "Signed — Nov 15, 2025",                     status: "verified",  source: "Document",      sourceSystem: "KYC Document Repository",      derivation: "agent",  group: "Documents",                  lastUpdated: "2025-11-15" },
+    { label: "Certificate of Incorporation", value: "Filed — New York (1998)",               status: "verified",  source: "Forge",        group: "Documents",                  lastUpdated: "2024-09-01" },
+    { label: "Form ADV Part 1 & 2",       value: "Filed 2024-03-15 — Current",               status: "verified",  source: "Third Party",  group: "Documents",                  lastUpdated: "2024-03-15" },
+    { label: "Board Resolution",          value: "BR-2024-0847 — Verified",                   status: "verified",  source: "Forge",        group: "Documents",                  lastUpdated: "2024-10-15" },
+    { label: "Certificate of Incumbency", value: "Filed — Jan 10, 2026",                      status: "verified",  source: "Forge",        group: "Documents",                  lastUpdated: "2026-01-10" },
+    { label: "UBO Declaration",           value: "Signed — Nov 15, 2025",                     status: "verified",  source: "Forge",        group: "Documents",                  lastUpdated: "2025-11-15" },
   ],
 };
 
@@ -246,16 +238,6 @@ function MissingTag() {
     </span>
   );
 }
-function VerifiedIcon() {
-  return (
-    <CheckCircle2 size={24} strokeWidth={2} className="text-ds-green-700 shrink-0" aria-label="Verified" />
-  );
-}
-function ConflictIcon() {
-  return (
-    <AlertTriangle size={24} strokeWidth={2} className="shrink-0" style={{ color: "var(--color-red-700)" }} aria-label="Conflict" />
-  );
-}
 function SourcePill({ label }: { label: string }) {
   return (
     <div className="inline-flex items-center gap-1 text-[10px] text-gray-400 bg-gray-50 border border-kyc-neutral-200 rounded-full px-1.5 py-0.5 mt-1.5 cursor-pointer hover:bg-gray-100">
@@ -271,232 +253,12 @@ function AttrStatusDot({ status }: { status?: AttrStatus }) {
 function SourceBadge({ source }: { source: DataSource }) {
   const cfg = SOURCE_CFG[source];
   return (
-    <span
-      className="inline-flex items-center text-[8px] font-bold px-1.5 py-0.5 rounded border shrink-0"
-      style={{ background: cfg.bg, color: cfg.text, borderColor: cfg.border }}
-    >
+    <span className={`inline-flex items-center text-[8px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${cfg.cls}`}>
       {cfg.label}
     </span>
   );
 }
 
-// ─── Attribute Detail Popup ───────────────────────────────────────
-function AttributeDetailPopup({ attr, onClose }: { attr: AttrRow; onClose: () => void }) {
-  const [reasoningOpen, setReasoningOpen] = useState(false);
-  const reasoning = getAttrReasoning(attr);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
-
-  const statusTag =
-    attr.status === "conflict" ? <ConflictTag /> :
-    attr.status === "missing"  ? <MissingTag /> :
-    <VerifiedChip />;
-
-  return (
-    <div
-      className="fixed inset-0 z-[350] flex items-center justify-center"
-      style={{ background: "rgba(0,16,48,0.45)", backdropFilter: "blur(2px)" }}
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Attribute detail: ${attr.label}`}
-    >
-      <div
-        className="relative flex flex-col overflow-hidden"
-        style={{
-          width: 400,
-          background: "var(--color-base-white)",
-          border: "1px solid var(--color-neutral-200)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
-          borderRadius: 12,
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Blue accent bar */}
-        <div className="h-1 w-full shrink-0" style={{ background: "var(--color-dark-blue-600)" }} />
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-kyc-neutral-200 shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[13px] font-semibold text-kyc-neutral-800 truncate">{attr.label}</span>
-            {statusTag}
-          </div>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded text-kyc-neutral-500 hover:text-kyc-neutral-800 hover:bg-kyc-neutral-100 transition-colors shrink-0 ml-2"
-            aria-label="Close attribute detail"
-          >
-            <X size={13} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 px-4 py-4 space-y-4">
-
-          {/* Value */}
-          <div>
-            <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Value</p>
-            <p className={`text-[13px] font-semibold leading-snug ${
-              attr.status === "conflict" ? "text-amber-700" :
-              attr.status === "missing"  ? "text-red-600"   :
-              "text-kyc-neutral-800"
-            }`}>{attr.value}</p>
-          </div>
-
-          {/* Meta grid */}
-          <div className="grid grid-cols-2 gap-3 border-t border-kyc-neutral-100 pt-3">
-            <div>
-              <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Data Source</p>
-              <SourceBadge source={attr.source} />
-            </div>
-            <div>
-              <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Group</p>
-              <p className="text-[11px] font-medium text-kyc-neutral-700">{attr.group}</p>
-            </div>
-            <div>
-              <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Last Updated</p>
-              <p className="text-[11px] font-medium text-kyc-neutral-700">{attr.lastUpdated ?? "—"}</p>
-            </div>
-            <div>
-              <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Status</p>
-              <div className="mt-0.5">{statusTag}</div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          {attr.notes && (
-            <div className="border-t border-kyc-neutral-100 pt-3">
-              <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Notes</p>
-              <p className="text-[11px] text-kyc-neutral-700 leading-snug">{attr.notes}</p>
-            </div>
-          )}
-
-          {/* Source context */}
-          <div className="border-t border-kyc-neutral-100 pt-3">
-            <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-2">Source System</p>
-            <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-kyc-neutral-50 border border-kyc-neutral-200">
-              <SourceBadge source={attr.source} />
-              <div className="text-[10px] text-kyc-neutral-700 leading-snug flex-1">
-                {attr.sourceSystem}
-              </div>
-              <button
-                className="ml-auto flex items-center gap-1 text-[9px] text-kyc-neutral-500 hover:text-kyc-neutral-800 shrink-0 transition-colors"
-                onClick={() => {}}
-                aria-label="Open in source system"
-              >
-                <ExternalLink size={9} /> Open in source system
-              </button>
-            </div>
-          </div>
-
-          {/* Agent Reasoning — collapsible progressive disclosure (agent-derived only) */}
-          {reasoning && (
-          <div className="border-t border-kyc-neutral-100 pt-3">
-            <button
-              className="w-full flex items-center justify-between gap-2 text-left"
-              onClick={() => setReasoningOpen(r => !r)}
-              aria-expanded={reasoningOpen}
-              aria-controls="attr-reasoning-panel"
-            >
-              <div className="flex items-center gap-1.5">
-                <Sparkles size={10} className="text-kyc-neutral-500 shrink-0" aria-hidden />
-                <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500">Agent Reasoning</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full border"
-                  style={{
-                    background: reasoning.confidence >= 95 ? "var(--color-green-000)" : reasoning.confidence >= 80 ? "#fffbeb" : "var(--color-red-000)",
-                    borderColor: reasoning.confidence >= 95 ? "var(--color-green-100)" : reasoning.confidence >= 80 ? "#fde68a" : "var(--color-red-100)",
-                    color: reasoning.confidence >= 95 ? "var(--color-green-700)" : reasoning.confidence >= 80 ? "#92400e" : "var(--color-red-700)",
-                  }}
-                >
-                  {reasoning.confidence}% confidence
-                </span>
-                {reasoningOpen
-                  ? <ChevronDown size={10} className="text-kyc-neutral-400 shrink-0" />
-                  : <ChevronRight size={10} className="text-kyc-neutral-400 shrink-0" />}
-              </div>
-            </button>
-
-            {reasoningOpen && (
-              <div id="attr-reasoning-panel" className="mt-3 space-y-3">
-
-                {/* Why this was selected */}
-                <div>
-                  <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1">Why this was selected</p>
-                  <p className="text-[10.5px] text-kyc-neutral-700 leading-snug">{reasoning.whySelected}</p>
-                </div>
-
-                {/* Reasoning steps */}
-                <div>
-                  <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1.5">Reasoning steps</p>
-                  <ol className="space-y-1.5">
-                    {reasoning.reasoningSteps.map((step, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span
-                          className="shrink-0 w-[16px] h-[16px] rounded-full flex items-center justify-center text-[8px] font-bold border mt-0.5"
-                          style={{ borderColor: "var(--color-neutral-300)", color: "var(--color-neutral-600)", background: "var(--color-neutral-050)" }}
-                        >
-                          {i + 1}
-                        </span>
-                        <p className="text-[10.5px] text-kyc-neutral-700 leading-snug">{step}</p>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-
-                {/* Evidence reviewed */}
-                <div>
-                  <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1.5">Evidence reviewed</p>
-                  <div className="space-y-1">
-                    {reasoning.evidenceSources.map((ev, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-1.5 px-2 py-1.5 border"
-                        style={{ background: "var(--color-neutral-050)", borderColor: "var(--color-neutral-200)" }}
-                      >
-                        <FileText size={9} className="text-kyc-neutral-500 shrink-0" aria-hidden />
-                        <p className="text-[10px] text-kyc-neutral-700 leading-snug">{ev}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Confidence assessment */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500">Confidence assessment</p>
-                    <p className="text-[9px] font-semibold text-kyc-neutral-600">{reasoning.confidence}%</p>
-                  </div>
-                  <div className="h-1 bg-kyc-neutral-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-1 rounded-full"
-                      style={{
-                        width: `${reasoning.confidence}%`,
-                        background: reasoning.confidence >= 95 ? "var(--color-green-700)" : reasoning.confidence >= 80 ? "#d97706" : "var(--color-red-700)",
-                      }}
-                    />
-                  </div>
-                  <p className="text-[9px] text-kyc-neutral-500 mt-1">
-                    Validated against {reasoning.evidenceSources.length} source{reasoning.evidenceSources.length !== 1 ? "s" : ""} · {reasoning.reasoningSteps.length} reasoning steps
-                  </p>
-                </div>
-
-              </div>
-            )}
-          </div>
-          )}
-
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Reasoning Drawer (now used as a tab panel in Index.tsx) ─────
 export function ReasoningDrawer({ attr, onClose }: { attr: AttrRow; onClose: () => void }) {
@@ -513,27 +275,15 @@ export function ReasoningDrawer({ attr, onClose }: { attr: AttrRow; onClose: () 
     attr.status === "missing"  ? <MissingTag /> :
     <VerifiedChip />;
 
-  if (!reasoning) {
-    return (
-      <div className="flex flex-col w-full h-full bg-white overflow-hidden items-center justify-center text-center px-6 py-10">
-        <p className="text-[11px] font-semibold text-kyc-neutral-600 mb-1">No agent reasoning available</p>
-        <p className="text-[10px] text-kyc-neutral-400 leading-snug">
-          This attribute is sourced from {attr.sourceSystem}.<br />
-          Confidence is not applicable for {attr.derivation === "manual" ? "manually entered" : "system-sourced"} data.
-        </p>
-      </div>
-    );
-  }
-
   const confColor =
-    reasoning.confidence >= 95 ? "var(--color-green-700)" :
-    reasoning.confidence >= 80 ? "#d97706" :
-    "var(--color-red-700)";
+    reasoning.confidence >= 85 ? "var(--color-green-500)" :
+    reasoning.confidence >= 60 ? "var(--color-yellow-500)" :
+    "var(--color-red-500)";
 
   const confBadgeStyle = {
-    background:   reasoning.confidence >= 95 ? "var(--color-green-000)"  : reasoning.confidence >= 80 ? "#fffbeb"  : "var(--color-red-000)",
-    borderColor:  reasoning.confidence >= 95 ? "var(--color-green-100)"  : reasoning.confidence >= 80 ? "#fde68a"  : "var(--color-red-100)",
-    color:        reasoning.confidence >= 95 ? "var(--color-green-700)"  : reasoning.confidence >= 80 ? "#92400e"  : "var(--color-red-700)",
+    background:   reasoning.confidence >= 85 ? "var(--color-green-000)"  : reasoning.confidence >= 60 ? "var(--color-yellow-000)"  : "var(--color-red-000)",
+    borderColor:  reasoning.confidence >= 85 ? "var(--color-green-200)"  : reasoning.confidence >= 60 ? "var(--color-yellow-200)"  : "var(--color-red-200)",
+    color:        reasoning.confidence >= 85 ? "var(--color-green-700)"  : reasoning.confidence >= 60 ? "var(--color-yellow-800)"  : "var(--color-red-700)",
   };
 
   return (
@@ -643,7 +393,11 @@ export function ReasoningDrawer({ attr, onClose }: { attr: AttrRow; onClose: () 
           <p className="text-[9px] font-bold tracking-widest uppercase text-kyc-neutral-500 mb-1.5">Source system</p>
           <div className="flex items-center gap-2 px-2.5 py-2 border" style={{ background: "var(--color-neutral-050)", borderColor: "var(--color-neutral-200)" }}>
             <SourceBadge source={attr.source} />
-            <p className="text-[9.5px] text-kyc-neutral-600 leading-snug flex-1">{attr.sourceSystem}</p>
+            <p className="text-[9.5px] text-kyc-neutral-600 leading-snug flex-1">
+              {attr.source === "CRM"         && "Salesforce CRM — internal client data"}
+              {attr.source === "Forge"       && "KPMG Forge — KYC workflow & documents"}
+              {attr.source === "Third Party" && "Refinitiv / D&B / OFAC — external vendors"}
+            </p>
             <ExternalLink size={9} className="shrink-0 text-kyc-neutral-400" />
           </div>
         </div>
@@ -679,7 +433,7 @@ function CardDetailPopup({ card, onClose }: { card: NonNullable<CardPopup>; onCl
   const [docExpanded, setDocExpanded] = useState(false);
 
   const confidence = card.discrepancy ? 71 : 94;
-  const sourceCount = card.discrepancy ? 3 : 2;
+  const sourceCount: number = card.discrepancy ? 3 : 2;
   const stepCount = 3;
 
   const whySelected = card.discrepancy
@@ -935,7 +689,7 @@ const L_CX     = 155; const R_CX = 545; const MID_CX = 350;
 const ROOT_Y = 24; const ROOT_W = 300; const ROOT_H = 90;
 const ROOT_X = MID_CX - ROOT_W / 2; const ROOT_BOT = ROOT_Y + ROOT_H;
 const BRANCH_Y = 135;
-const ENT_LABEL_Y = 142; const ENT_Y = 154; const ENT_H = 52; const ENT_BOT = ENT_Y + ENT_H;
+const ENT_Y = 154; const ENT_H = 52; const ENT_BOT = ENT_Y + ENT_H;
 const CARD_GAP = 10;
 const C1_Y = ENT_BOT + CARD_GAP; const C1_H = 44; const C1_BOT = C1_Y + C1_H;
 const C2_Y = C1_BOT + CARD_GAP;  const C2_H = 44; const C2_BOT = C2_Y + C2_H;
@@ -1142,7 +896,7 @@ function AttrGroupSection({
 // ─── Parent View (Entity Attributes) ─────────────────────────────
 function ParentView({ selectedAttr, onAttrClick }: { selectedAttr: AttrRow | null; onAttrClick: (a: AttrRow) => void }) {
   const [sourceFilter, setSourceFilter] = useState<DataSource | "All">("All");
-  const allSources: (DataSource | "All")[] = ["All", "Document", "External Data", "Internal Data"];
+  const allSources: (DataSource | "All")[] = ["All", "CRM", "Forge", "Third Party"];
 
   const renderAttrSection = (entityName: string, attrs: AttrRow[], subtitle?: string, passedSelectedAttr?: AttrRow | null) => {
     const groups = Array.from(new Set(attrs.map(a => a.group)));
@@ -1262,7 +1016,6 @@ function InspectDrawer({ id, onClose, onAttrClick }: { id: string; onClose: () =
 
 // ─── Main Canvas ──────────────────────────────────────────────────
 export function ContentTreeCanvas({
-  onViewModeChange,
   selectedAttr = null,
   onAttrSelect,
 }: {
@@ -1270,7 +1023,7 @@ export function ContentTreeCanvas({
   selectedAttr?: AttrRow | null;
   onAttrSelect?: (attr: AttrRow | null) => void;
 } = {}) {
-  const [viewMode, setViewMode]   = useState<ViewMode>("child");
+  const [viewMode] = useState<ViewMode>("child");
   const [tx, setTx]               = useState(0);
   const [ty, setTy]               = useState(16);
   const [scale, setScale]         = useState(0.85);
@@ -1329,7 +1082,6 @@ export function ContentTreeCanvas({
     return () => ro.disconnect();
   }, [fitToContainer]);
 
-  const switchMode = (m: ViewMode) => { setViewMode(m); setDrawer(null); onViewModeChange?.(m); };
 
   return (
     <div className="flex flex-col w-full h-full overflow-hidden bg-white">

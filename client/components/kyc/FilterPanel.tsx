@@ -79,7 +79,6 @@ function Checkbox({
   checked,
   onChange,
   label,
-  color,
 }: {
   checked: boolean;
   onChange: () => void;
@@ -110,7 +109,7 @@ function Checkbox({
   );
 }
 
-export function FilterPanel({ filters, onChange, onClose }: FilterPanelProps) {
+export function FilterPanel({ filters, onChange }: FilterPanelProps) {
   const activeCount = [
     filters.entity.trim() !== "",
     filters.dueDateFrom !== "" || filters.dueDateTo !== "",

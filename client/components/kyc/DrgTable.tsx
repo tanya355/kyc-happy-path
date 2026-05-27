@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { WorkQueueFilters } from "./WorkQueueFilterPanel";
-import { ChevronRight, ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, Lock, ChevronLeft } from "lucide-react";
-
-const PAGE_SIZE = 3;
+import { ChevronRight, ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, Lock } from "lucide-react";
 
 type SortKey = "name" | "dueDate" | "riskRating" | "confidence" | "exceptions" | "status" | "action";
 type SortDir = "asc" | "desc";
@@ -168,12 +166,11 @@ export function DrgTable({ selected = new Set<string>(), onSelectionChange = () 
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["blackrock"]));
   const [sortKey, setSortKey] = useState<SortKey>("dueDate");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [page, setPage] = useState(1);
   const setSelected = onSelectionChange;
 
   const activeFilters = filters ?? { entity: "", dueDateFrom: "", dueDateTo: "", jurisdictions: [], priorities: [], riskRatings: [] };
 
-  const allFilteredGroups = DRG_GROUPS
+  const filteredGroups = DRG_GROUPS
     .filter(group => (activeFilters.priorities ?? []).length === 0 || (activeFilters.priorities ?? []).includes(group.priority.level))
     .map(group => ({
       ...group,
@@ -191,14 +188,6 @@ export function DrgTable({ selected = new Set<string>(), onSelectionChange = () 
     }))
     .filter(group => group.entities.length > 0);
 
-  const totalGroups = allFilteredGroups.length;
-  const totalPages = Math.max(1, Math.ceil(totalGroups / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages - 1);
-  const filteredGroups = allFilteredGroups.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
-  const totalEntities = allFilteredGroups.reduce((s, g) => s + g.entities.length, 0);
-  const firstEntry = safePage * PAGE_SIZE + 1;
-  const lastEntry = Math.min((safePage + 1) * PAGE_SIZE, totalGroups);
-
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir(d => (d === "asc" ? "desc" : "asc"));
@@ -206,7 +195,6 @@ export function DrgTable({ selected = new Set<string>(), onSelectionChange = () 
       setSortKey(key);
       setSortDir("asc");
     }
-    setPage(0);
   };
 
   const SortIcon = ({ k }: { k: SortKey }) => {
@@ -420,52 +408,6 @@ export function DrgTable({ selected = new Set<string>(), onSelectionChange = () 
           </div>
         );
       })}
-
-      {/* Pagination footer — outside groups, pinned at bottom of table */}
-      <div
-        className="flex items-center justify-between px-4 py-2.5"
-        style={{ borderTop: "1px solid var(--color-neutral-200)", background: "var(--color-neutral-000)" }}
-      >
-        <span className="text-[11px]" style={{ color: "var(--color-neutral-500)" }}>
-          Showing {firstEntry}–{lastEntry} of {totalGroups} groups · {totalEntities} entities
-        </span>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setPage(p => Math.max(0, p - 1))}
-            disabled={safePage === 0}
-            className="w-7 h-7 flex items-center justify-center rounded border transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-white"
-            style={{ borderColor: "var(--color-neutral-200)", color: "var(--color-neutral-600)" }}
-            aria-label="Previous page"
-          >
-            <ChevronLeft size={13} />
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setPage(i)}
-              className="w-7 h-7 flex items-center justify-center rounded border text-[11px] font-semibold transition-colors"
-              style={{
-                borderColor: safePage === i ? "var(--color-dark-blue-600)" : "var(--color-neutral-200)",
-                background: safePage === i ? "var(--color-dark-blue-600)" : "transparent",
-                color: safePage === i ? "white" : "var(--color-neutral-600)",
-              }}
-              aria-label={`Page ${i + 1}`}
-              aria-current={safePage === i ? "page" : undefined}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-            disabled={safePage === totalPages - 1}
-            className="w-7 h-7 flex items-center justify-center rounded border transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-white"
-            style={{ borderColor: "var(--color-neutral-200)", color: "var(--color-neutral-600)" }}
-            aria-label="Next page"
-          >
-            <ChevronRight size={13} />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

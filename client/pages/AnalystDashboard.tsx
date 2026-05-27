@@ -1,14 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
-  FileText, Clock, CheckCircle2,
+  FileText, Clock,
   AlertTriangle, MessageSquare,
   Globe, ChevronRight, Paperclip,
-  TrendingUp, TrendingDown, Activity,
-  ArrowUpRight, Zap, ShieldAlert,
-  BarChart2, ArrowRight, ExternalLink,
+  Activity,
+  Zap, ShieldAlert,
+  ExternalLink,
   Maximize2, X,
 } from "lucide-react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ReferenceLine, ResponsiveContainer, Area, AreaChart,
+  PieChart, Pie, Cell,
+} from "recharts";
 import { TopNav } from "@/components/kyc/TopNav";
 import { Button } from "@kpmg-us/ad-design-lib";
 
@@ -21,49 +26,6 @@ const card: React.CSSProperties = {
 };
 
 // ── AI Operational Briefing data ──────────────────────────────────────
-
-const AI_BRIEFING = [
-  {
-    severity: "critical",
-    label: "Critical Risk",
-    Icon: ShieldAlert,
-    text: "3 cases projected to breach SLA within 24 hours",
-    sub: "KYC-2194, KYC-2210, KYC-2188 — immediate action required",
-    dotColor: "var(--color-red-700)",
-    labelClass: "text-ds-neutral-800",
-    bgStyle: { background: "var(--color-red-000)", borderColor: "var(--color-red-200)" },
-  },
-  {
-    severity: "warning",
-    label: "Bottleneck Detected",
-    Icon: TrendingUp,
-    text: "Decision Support queue increased 14% since Monday",
-    sub: "22 cases pending analyst determination — backlog accelerating",
-    dotColor: "var(--color-yellow-800)",
-    labelClass: "text-ds-neutral-800",
-    bgStyle: { background: "var(--color-yellow-000)", borderColor: "var(--color-yellow-300)" },
-  },
-  {
-    severity: "positive",
-    label: "Improving",
-    Icon: TrendingDown,
-    text: "Client backlog improving — 8 responses received overnight",
-    sub: "Blocking rate down 6% vs last week, momentum sustained",
-    dotColor: "var(--color-green-700)",
-    labelClass: "text-ds-neutral-800",
-    bgStyle: { background: "var(--color-green-000)", borderColor: "var(--color-green-200)" },
-  },
-  {
-    severity: "forecast",
-    label: "Forecast",
-    Icon: BarChart2,
-    text: "Active case volume projected to decline 34% by May 15",
-    sub: "Workflow efficiency improving on current trajectory",
-    dotColor: "var(--color-dark-blue-600)",
-    labelClass: "text-ds-neutral-800",
-    bgStyle: { background: "var(--color-dark-blue-000)", borderColor: "var(--color-dark-blue-100)" },
-  },
-];
 
 // ── AI action detail responses ────────────────────────────────────────
 
@@ -191,17 +153,17 @@ const PERIODS = [
 
 // ── Status bar data ────────────────────────────────────────────────────
 
+const STATUS_DATA = [
+  { label: "Not Started",       count: 2, pct: 20, color: "var(--color-neutral-400)" },
+  { label: "In Progress",       count: 3, pct: 30, color: "var(--color-dark-blue-600)" },
+  { label: "Pending Feedback",  count: 3, pct: 30, color: "var(--color-dark-blue-300)" },
+  { label: "Complete",          count: 2, pct: 20, color: "var(--color-green-700)" },
+];
+
 // ── Priority cases ─────────────────────────────────────────────────────
 
 type PriorityLevel2 = "High" | "Medium" | "Low";
 type CaseStatus = "Escalated" | "Overdue" | "Pending Decision" | "Awaiting Client";
-
-const STATUS_STYLES: Record<CaseStatus, { label: string; className: string }> = {
-  Escalated:        { label: "Escalated",       className: "bg-ds-red-000 text-ds-red-700 border border-ds-red-200" },
-  Overdue:          { label: "Overdue",          className: "bg-ds-red-000 text-ds-red-700 border border-ds-red-200" },
-  "Pending Decision": { label: "Pending Decision", className: "bg-ds-yellow-000 text-ds-neutral-700 border border-ds-yellow-300" },
-  "Awaiting Client":  { label: "Awaiting Client",  className: "bg-ds-neutral-100 text-ds-neutral-600 border border-ds-neutral-200" },
-};
 
 const PRIORITY_CASES: {
   priority: PriorityLevel2;
@@ -247,6 +209,97 @@ const PRIORITY_CASES: {
 
 // ── Chart data ─────────────────────────────────────────────────────────
 
+const CASES_OVER_TIME_7D = [
+  { day: "Mon", new: 12, completed:  8, overdue: 3 },
+  { day: "Tue", new: 18, completed: 14, overdue: 4 },
+  { day: "Wed", new: 15, completed: 16, overdue: 3 },
+  { day: "Thu", new: 21, completed: 13, overdue: 6 },
+  { day: "Fri", new: 17, completed: 19, overdue: 4 },
+  { day: "Sat", new:  9, completed: 11, overdue: 2 },
+  { day: "Sun", new: 11, completed: 15, overdue: 3 },
+];
+const CASES_OVER_TIME_30D = [
+  { day: "Apr 7",  new: 28, completed: 22, overdue: 7 },
+  { day: "Apr 10", new: 32, completed: 27, overdue: 8 },
+  { day: "Apr 13", new: 25, completed: 30, overdue: 6 },
+  { day: "Apr 16", new: 38, completed: 28, overdue: 9 },
+  { day: "Apr 19", new: 41, completed: 35, overdue: 11 },
+  { day: "Apr 22", new: 36, completed: 39, overdue: 8 },
+  { day: "Apr 25", new: 29, completed: 33, overdue: 7 },
+  { day: "Apr 28", new: 44, completed: 38, overdue: 10 },
+  { day: "May 1",  new: 39, completed: 42, overdue: 9 },
+  { day: "May 4",  new: 51, completed: 44, overdue: 12 },
+  { day: "May 7",  new: 47, completed: 49, overdue: 8 },
+];
+const CASES_OVER_TIME_90D = [
+  { day: "Feb",  new: 210, completed: 185, overdue: 42 },
+  { day: "Mar 1", new: 240, completed: 210, overdue: 51 },
+  { day: "Mar 15", new: 228, completed: 232, overdue: 48 },
+  { day: "Apr 1", new: 265, completed: 248, overdue: 55 },
+  { day: "Apr 15", new: 289, completed: 271, overdue: 61 },
+  { day: "May 1",  new: 312, completed: 295, overdue: 67 },
+  { day: "May 7",  new: 298, completed: 310, overdue: 58 },
+];
+
+const FORECAST_DATA: Record<string, { date: string; expected: number; actual: number | null }[]> = {
+  "30d": [
+    { date: "May 1",  expected: 119, actual: 119  },
+    { date: "May 5",  expected: 102, actual: 98   },
+    { date: "May 7",  expected: 90,  actual: 87   },
+    { date: "May 10", expected: 75,  actual: null },
+    { date: "May 15", expected: 55,  actual: null },
+    { date: "May 20", expected: 34,  actual: null },
+    { date: "May 25", expected: 14,  actual: null },
+    { date: "May 31", expected: 0,   actual: null },
+  ],
+  "60d": [
+    { date: "May 1",  expected: 119, actual: 119 },
+    { date: "May 7",  expected: 90,  actual: 87  },
+    { date: "May 15", expected: 70,  actual: null },
+    { date: "May 22", expected: 55,  actual: null },
+    { date: "Jun 1",  expected: 40,  actual: null },
+    { date: "Jun 10", expected: 28,  actual: null },
+    { date: "Jun 20", expected: 15,  actual: null },
+    { date: "Jun 30", expected: 5,   actual: null },
+  ],
+  "90d": [
+    { date: "May 1",  expected: 119, actual: 119 },
+    { date: "May 15", expected: 95,  actual: null },
+    { date: "Jun 1",  expected: 75,  actual: null },
+    { date: "Jun 15", expected: 58,  actual: null },
+    { date: "Jul 1",  expected: 42,  actual: null },
+    { date: "Jul 15", expected: 25,  actual: null },
+    { date: "Aug 1",  expected: 10,  actual: null },
+    { date: "Aug 7",  expected: 0,   actual: null },
+  ],
+  "6m": [
+    { date: "May",    expected: 119, actual: 119 },
+    { date: "Jun",   expected: 95,  actual: null },
+    { date: "Jul",   expected: 72,  actual: null },
+    { date: "Aug",   expected: 50,  actual: null },
+    { date: "Sep",   expected: 30,  actual: null },
+    { date: "Oct",   expected: 12,  actual: null },
+  ],
+  "1y": [
+    { date: "May 25",  expected: 119, actual: 119 },
+    { date: "Jul 25",  expected: 95,  actual: null },
+    { date: "Sep 25",  expected: 72,  actual: null },
+    { date: "Nov 25",  expected: 50,  actual: null },
+    { date: "Jan 26",  expected: 30,  actual: null },
+    { date: "Mar 26",  expected: 15,  actual: null },
+    { date: "May 26",  expected: 5,   actual: null },
+  ],
+};
+
+const RESPONSE_TREND = [
+  { day: "Mon", avg: 3.8, sla: 3.0 },
+  { day: "Tue", avg: 3.5, sla: 3.0 },
+  { day: "Wed", avg: 3.2, sla: 3.0 },
+  { day: "Thu", avg: 3.6, sla: 3.0 },
+  { day: "Fri", avg: 2.9, sla: 3.0 },
+  { day: "Sat", avg: 2.7, sla: 3.0 },
+  { day: "Sun", avg: 3.1, sla: 3.0 },
+];
 
 // ── Sub-components ─────────────────────────────────────────────────────
 
@@ -268,21 +321,11 @@ function DonutProgress({ pct }: { pct: number }) {
   );
 }
 
-function Sparkline() {
-  const pts = [3.8, 3.5, 3.2, 3.6, 2.9, 2.7, 3.1];
-  const W = 64, H = 28;
-  const min = Math.min(...pts), max = Math.max(...pts);
-  const coords = pts.map((v, i) => {
-    const x = (i / (pts.length - 1)) * W;
-    const y = H - ((v - min) / (max - min || 1)) * H;
-    return `${x},${y}`;
-  });
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-      <polyline points={coords.join(" ")} fill="none" stroke="var(--color-dark-blue-300)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+const tooltipStyle = {
+  contentStyle: { fontSize: 11, background: "#ffffff", border: "1px solid #E5E5E5", borderRadius: 6, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
+  labelStyle: { fontWeight: 700, color: "#00338D" },
+  itemStyle: { color: "#666666" },
+};
 
 // ── Page ──────────────────────────────────────────────────────────────
 
@@ -399,12 +442,12 @@ export default function AnalystDashboard() {
       setFollowUpThread(prev => [...prev, { role: "agent", text: getFollowUpResponse(userText) }]);
     }, 900 + Math.random() * 500);
   }
+  const [chartRange, setChartRange] = useState("Last 7 Days");
+  const [forecastRange, setForecastRange] = useState("30d");
   const [agentStatusIdx, setAgentStatusIdx] = useState(0);
   const [statusVisible, setStatusVisible] = useState(true);
   const [activeAction, setActiveAction] = useState<number | null>(null);
   const [kpiContext, setKpiContext] = useState<{ label: string; value: string; unit: string; summary: string; points: string[]; allFrames?: TickerFrame[] } | null>(null);
-  const [signedOff, setSignedOff] = useState(false);
-  const [hoveredSegment, setHoveredSegment] = useState<null | { label: string; count: number; pct: number; color: string; x: number; y: number }>(null);
   const [expandedPanel, setExpandedPanel] = useState<"ai" | "collab" | null>(null);
 
   useEffect(() => {
@@ -420,7 +463,6 @@ export default function AnalystDashboard() {
 
   const activePeriod = PERIODS.find(p => p.label === "Today")!;
   const metrics = activePeriod.kpis;
-  const deltas = activePeriod.delta;
 
   const animAttention    = useAnimatedCounter(metrics.attention);
   const animResponseTimeRaw = useAnimatedCounter(Math.round(parseFloat(metrics.responseTime) * 10));
@@ -439,6 +481,7 @@ export default function AnalystDashboard() {
   const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   const timeStr = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 
+  const totalActive = STATUS_DATA.filter(s => s.label !== "Complete").reduce((a, b) => a + b.count, 0);
 
   // ── Right pane resize ──────────────────────────────────────────────
   const RIGHT_PANE_MIN = 300;
@@ -650,8 +693,8 @@ export default function AnalystDashboard() {
 
             </div>
 
-            {/* ── Hero Section: Priority Cases ── */}
-            <div className="anim-fade-slide-up anim-delay-3">
+            {/* ── Hero Section: Priority Cases + Cases by Status ── */}
+            <div className="grid grid-cols-[1fr_1fr] gap-3 anim-fade-slide-up anim-delay-3">
 
               {/* Left: Priority Cases */}
               <div style={card} className="p-4 flex flex-col">
@@ -689,7 +732,6 @@ export default function AnalystDashboard() {
                       Medium: "bg-ds-yellow-000 text-ds-neutral-700 border border-ds-yellow-300",
                       Low:    "bg-ds-neutral-100 text-ds-neutral-600 border border-ds-neutral-200",
                     };
-                    const statusMeta = STATUS_STYLES[c.status];
                     return (
                       <Link
                         key={c.id}
@@ -738,8 +780,222 @@ export default function AnalystDashboard() {
                 </div>
               </div>
 
+              {/* Right: Cases by Status */}
+              <div style={card} className="p-4 flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <h2 className="text-[13px] font-semibold text-ds-neutral-900">Cases by Status</h2>
+                    <p className="text-[10px] text-ds-neutral-800 mt-0.5">Operational workload distribution</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-ds-neutral-800 font-medium uppercase tracking-wider">Total Active</p>
+                    <p className="text-[24px] font-bold text-ds-neutral-900 leading-none">{totalActive}</p>
+                  </div>
+                </div>
+                {/* Pie — top half, fills available width */}
+                <div className="flex-1 min-h-0" role="img" aria-label="Pie chart showing case distribution by status: Not Started 20%, In Progress 30%, Pending Feedback 30%, Complete 20%">
+                  <ResponsiveContainer width="100%" height={260}>
+                    <PieChart>
+                      <Pie
+                        data={STATUS_DATA}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius="88%"
+                        paddingAngle={0}
+                        dataKey="count"
+                        strokeWidth={1}
+                        stroke="var(--color-base-white)"
+                        label={({ cx, cy, midAngle, innerRadius, outerRadius, payload }) => {
+                          const RADIAN = Math.PI / 180;
+                          const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
+                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                          return (
+                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight={700}>
+                              {payload.pct}%
+                            </text>
+                          );
+                        }}
+                        labelLine={false}
+                      >
+                        {STATUS_DATA.map((s, i) => (
+                          <Cell key={i} fill={s.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number, _: string, entry: any) => [`${value} cases (${entry.payload.pct}%)`, entry.payload.label]}
+                        contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid var(--color-neutral-200)", boxShadow: "var(--shadow-400)" }}
+                        itemStyle={{ color: "var(--color-neutral-800)" }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Legend — below pie */}
+                <div className="flex flex-col gap-2 pt-2" style={{ borderTop: "1px solid var(--color-neutral-100)" }}>
+                  {STATUS_DATA.map(s => (
+                    <div key={s.label} className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: s.color }} />
+                      <span className="text-[11px] text-ds-neutral-700 flex-1">{s.label}</span>
+                      <span className="text-[11px] font-bold text-ds-neutral-900 tabular-nums">{s.count}</span>
+                      <span className="text-[10px] text-ds-neutral-500 tabular-nums w-8 text-right">{s.pct}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             </div>
 
+            {/* ── Secondary Analytics Row ── */}
+            <div className="grid grid-cols-2 gap-3 anim-fade-slide-up anim-delay-4">
+
+              <div style={card} className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h2 className="text-[13px] font-semibold text-ds-neutral-900">Cases Over Time</h2>
+                    <p className="text-[10px] text-ds-neutral-800 mt-0.5">New, completed, and overdue</p>
+                  </div>
+                  <select
+                    value={chartRange}
+                    onChange={e => setChartRange(e.target.value)}
+                    aria-label="Select chart date range"
+                    className="text-[10px] font-semibold text-ds-neutral-600 bg-ds-neutral-100 border-none rounded px-2 py-1 outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-ds-dark-blue-600"
+                  >
+                    <option>Last 7 Days</option>
+                    <option>Last 30 Days</option>
+                    <option>Last 90 Days</option>
+                  </select>
+                </div>
+                <ResponsiveContainer width="100%" height={160}>
+                  <LineChart data={chartRange === "Last 30 Days" ? CASES_OVER_TIME_30D : chartRange === "Last 90 Days" ? CASES_OVER_TIME_90D : CASES_OVER_TIME_7D} margin={{ top: 4, right: 4, bottom: 0, left: -24 }} style={{ background: "#ffffff" }}>
+                    <CartesianGrid strokeDasharray="" stroke="#E5E5E5" vertical={false} />
+                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#666666" }} axisLine={{ stroke: "#E5E5E5" }} tickLine={{ stroke: "#666666" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "#666666" }} axisLine={false} tickLine={false} />
+                    <Tooltip {...tooltipStyle} />
+                    <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: 10, paddingTop: 8, color: "#666666" }} />
+                    <Line type="monotone" dataKey="new" stroke="var(--color-dark-blue-600)" strokeWidth={2} dot={false} name="New Cases" />
+                    <Line type="monotone" dataKey="completed" stroke="var(--color-green-700)" strokeWidth={2} dot={false} name="Completed" />
+                    <Line type="monotone" dataKey="overdue" stroke="var(--color-neutral-600)" strokeWidth={2} strokeDasharray="5 3" dot={false} name="Overdue" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div style={card} className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h2 className="text-[13px] font-semibold text-ds-neutral-900">Response Time Trend</h2>
+                    <p className="text-[10px] text-ds-neutral-800 mt-0.5">Avg days vs SLA target</p>
+                  </div>
+                  <div className="flex items-center gap-3 text-[10px] text-ds-neutral-600">
+                    <span className="flex items-center gap-1"><span className="w-4 border-t-2 border-dashed inline-block" style={{ borderColor: "var(--color-neutral-600)" }} />SLA</span>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={160}>
+                  <LineChart data={RESPONSE_TREND} margin={{ top: 4, right: 4, bottom: 0, left: -24 }} style={{ background: "#ffffff" }}>
+                    <CartesianGrid strokeDasharray="" stroke="#E5E5E5" vertical={false} />
+                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#666666" }} axisLine={{ stroke: "#E5E5E5" }} tickLine={{ stroke: "#666666" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "#666666" }} axisLine={false} tickLine={false} domain={[2, 4.5]} />
+                    <Tooltip {...tooltipStyle} />
+                    <ReferenceLine y={3} stroke="var(--color-neutral-600)" strokeDasharray="5 3" strokeWidth={1.5} label={{ value: "SLA", position: "right", fontSize: 9, fill: "var(--color-neutral-600)" }} />
+                    <Line type="monotone" dataKey="avg" stroke="var(--color-dark-blue-600)" strokeWidth={2} dot={{ r: 3, fill: "var(--color-dark-blue-600)", strokeWidth: 0 }} name="Avg (days)" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+            </div>
+
+            {/* ── Operational Forecast ── */}
+            <div style={card} className="px-4 pt-4 pb-3">
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <h2 className="text-[13px] font-bold text-ds-neutral-900">Operational Forecast</h2>
+                  <p className="text-[10px] text-ds-neutral-800 mt-0.5">AI-generated projection based on operational workflow trends</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 text-[10px] text-ds-neutral-600">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-5 h-[2px] inline-block rounded" style={{ background: "var(--color-neutral-800)" }} />
+                      Projected
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-5 h-[2px] inline-block rounded" style={{ background: "var(--color-neutral-400)" }} />
+                      Actual
+                    </span>
+                  </div>
+                  <select
+                    value={forecastRange}
+                    onChange={e => setForecastRange(e.target.value)}
+                    className="text-[11px] font-medium text-ds-neutral-700 bg-ds-neutral-100 border-none rounded px-2 py-1 outline-none cursor-pointer"
+                  >
+                    <option value="30d">Next 30 Days</option>
+                    <option value="60d">This Month</option>
+                    <option value="90d">Next Quarter</option>
+                    <option value="6m">Custom Range</option>
+                  </select>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={148}>
+                <AreaChart data={FORECAST_DATA[forecastRange]} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
+                  <defs>
+                    <linearGradient id="projectedFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-neutral-800)" stopOpacity={0.08} />
+                      <stop offset="95%" stopColor="var(--color-neutral-800)" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="actualFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-neutral-500)" stopOpacity={0.12} />
+                      <stop offset="95%" stopColor="var(--color-neutral-500)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="2 4" stroke="var(--color-neutral-150, #ebebeb)" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 10, fill: "var(--color-neutral-600)", fontWeight: 500 }}
+                    axisLine={{ stroke: "var(--color-neutral-300)" }}
+                    tickLine={false}
+                    dy={4}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "var(--color-neutral-600)", fontWeight: 500 }}
+                    axisLine={{ stroke: "var(--color-neutral-300)" }}
+                    tickLine={false}
+                    domain={[0, 140]}
+                    tickCount={5}
+                  />
+                  <Tooltip {...tooltipStyle} />
+                  <ReferenceLine
+                    x="May 7"
+                    stroke="var(--color-neutral-400)"
+                    strokeDasharray="3 3"
+                    strokeWidth={1}
+                    label={{ value: "Today", position: "insideTopRight", fontSize: 9, fill: "var(--color-neutral-700)", dy: -2 }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="expected"
+                    stroke="var(--color-neutral-800)"
+                    strokeWidth={2}
+                    strokeDasharray="6 3"
+                    fill="url(#projectedFill)"
+                    dot={false}
+                    name="Projected"
+                    connectNulls
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="actual"
+                    stroke="var(--color-neutral-500)"
+                    strokeWidth={2.5}
+                    fill="url(#actualFill)"
+                    dot={{ r: 3, fill: "var(--color-neutral-600)", strokeWidth: 0 }}
+                    name="Actual"
+                    connectNulls
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+              <p className="text-[9px] mt-1.5" style={{ color: "var(--color-neutral-600)" }}>
+                * Projections are estimates. Accuracy depends on a configured capacity model — values shown are illustrative until your model is set up.
+              </p>
+            </div>
 
           </div>
 
