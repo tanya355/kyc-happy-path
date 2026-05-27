@@ -19,7 +19,7 @@
 
 import { describe, it, expect } from "vitest";
 import type { DrgGroup, WorkQueueFilterState } from "@/lib/types";
-import { EMPTY_FILTERS } from "./queue-filters";
+import { EMPTY_FILTERS } from "./QueueFiltersBar";
 
 // ─── Re-exported pure filter logic (mirroring drg-entity-grid.tsx) ───────────
 // This function is the source of truth for filtering — keep in sync with the grid.
