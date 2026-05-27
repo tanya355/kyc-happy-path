@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router";
 import { X, Maximize2, ExternalLink } from "lucide-react";
 import { TopNav } from "@/components/kyc/TopNav";
 import { CaseHeader, CaseStatusBar, ENTITY_META } from "@/components/kyc/CaseHeader";

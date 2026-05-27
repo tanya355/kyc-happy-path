@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Send, CheckCircle2, X, Check, AlertOctagon, XCircle, Info, AlertTriangle, Bot, Loader2, ChevronDown, ChevronUp, ClipboardList, Mail } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@kpmg-us/ad-design-lib";
 import { DrgModal } from "./DrgModal";

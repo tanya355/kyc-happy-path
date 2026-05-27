@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Search, Filter } from "lucide-react";
 import { Button } from "@kpmg-us/ad-design-lib";
 import { TopNav } from "@/components/kyc/TopNav";

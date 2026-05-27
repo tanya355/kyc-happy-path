@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ArrowRight, Shield, ClipboardCheck } from "lucide-react";
 
 /* ── Full-screen background wave animation ── */
