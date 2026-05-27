@@ -635,7 +635,7 @@ export function QaHelpAgent() {
         style={{ borderTop: `1px solid ${tok.neu100}`, background: tok.neu000 }}
       >
         <span className="text-[10px]" style={{ color: tok.neu600 }}>
-          Static preview — Forge integration pending
+          Static preview — agent integration pending
         </span>
         <span className="text-[10px] font-semibold" style={{ color: tok.neu700 }}>
           Internal use only
