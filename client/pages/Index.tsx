@@ -302,24 +302,37 @@ export default function Index() {
 
           {/* Collapsed strip – shown when right panel is hidden */}
           {!rightPanelOpen && (
-            <div
-              className="hidden lg:flex shrink-0 flex-col items-center border-l"
-              style={{ width: 32, background: "white", borderColor: "var(--color-neutral-200)" }}
+            <button
+              onClick={() => setRightPanelOpen(true)}
+              className="hidden lg:flex shrink-0 flex-col items-center gap-3 border-l cursor-pointer transition-colors group"
+              style={{
+                width: 44,
+                background: "var(--color-neutral-000)",
+                borderColor: "var(--color-neutral-200)",
+                paddingTop: 14,
+                paddingBottom: 14,
+              }}
+              title="Expand attributes panel"
+              aria-label="Expand attributes panel"
             >
-              <button
-                onClick={() => setRightPanelOpen(true)}
-                className="mt-3 w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-kyc-neutral-100"
-                title="Expand attributes panel"
+              <div
+                className="w-7 h-7 flex items-center justify-center rounded-md transition-colors group-hover:bg-kyc-neutral-100"
+                style={{ border: "1px solid var(--color-neutral-200)", background: "white" }}
               >
-                <ChevronLeft size={13} style={{ color: "var(--color-neutral-500)" }} />
-              </button>
+                <ChevronLeft size={14} style={{ color: "var(--color-dark-blue-600)" }} />
+              </div>
               <span
-                className="mt-3 text-[9px] font-bold uppercase tracking-widest select-none"
-                style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", color: "var(--color-neutral-500)" }}
+                className="text-[9px] font-bold uppercase tracking-widest select-none flex-1"
+                style={{
+                  writingMode: "vertical-rl",
+                  transform: "rotate(180deg)",
+                  color: "var(--color-dark-blue-600)",
+                  letterSpacing: "0.12em",
+                }}
               >
                 Attributes
               </span>
-            </div>
+            </button>
           )}
 
           {/* Drag handle – only when panel is open */}
