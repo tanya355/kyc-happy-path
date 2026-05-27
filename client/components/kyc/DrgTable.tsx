@@ -417,8 +417,11 @@ export function DrgTable({ selected = new Set<string>(), onSelectionChange = () 
                 </div>
               );
             })}
+          </div>
+        );
+      })}
 
-      {/* Pagination footer */}
+      {/* Pagination footer — outside groups, pinned at bottom of table */}
       <div
         className="flex items-center justify-between px-4 py-2.5"
         style={{ borderTop: "1px solid var(--color-neutral-200)", background: "var(--color-neutral-000)" }}
@@ -463,9 +466,6 @@ export function DrgTable({ selected = new Set<string>(), onSelectionChange = () 
           </button>
         </div>
       </div>
-    </div>
-  );
-})}
     </div>
   );
 }
