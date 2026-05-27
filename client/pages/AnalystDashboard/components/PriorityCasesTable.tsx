@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import type { CSSProperties } from "react";
 import { AlertTriangle, ChevronRight, Zap } from "lucide-react";
 import type { PriorityCase, PriorityLevel2 } from "../AnalystDashboardData";

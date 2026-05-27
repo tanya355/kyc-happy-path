@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { TopNav } from "@/components/kyc/TopNav";
 import { DrgTable, Entity } from "@/components/kyc/DrgTable";
 import {

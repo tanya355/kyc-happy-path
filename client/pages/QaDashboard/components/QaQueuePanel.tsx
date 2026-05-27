@@ -1,7 +1,7 @@
 import {
   X, AlertOctagon, RotateCcw, Send, Info, Globe, AlertTriangle, ArrowUpRight,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@kpmg-us/ad-design-lib";
 import type { QueueEntry } from "../QaDashboardData";
 import { StatusPill } from "./StatusPill";
