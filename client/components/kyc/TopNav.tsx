@@ -138,7 +138,10 @@ export function TopNav() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0" style={{ transform: "scale(0.8)", transformOrigin: "center right" }}>
+        <div
+          className="banner-actions flex items-center gap-2 shrink-0"
+          style={{ transform: "scale(0.8)", transformOrigin: "center right" }}
+        >
           {ranAgent ? (
             <span
               className="flex items-center gap-1 text-[11px] font-medium px-3 py-1 rounded"
@@ -148,7 +151,7 @@ export function TopNav() {
             </span>
           ) : (
             <Button
-              variant="filled"
+              variant="outlined"
               size="small"
               label="Run Recommended"
               onClick={() => { setRanAgent(true); setTimeout(() => setRanAgent(false), 3000); }}
@@ -170,8 +173,8 @@ export function TopNav() {
 
             {agentDropOpen && (
               <div
-                className="absolute right-0 top-full mt-1 w-72 py-1 shadow-lg rounded-lg z-[300]"
-                style={{ background: "white", border: "1px solid var(--color-neutral-200, #e5e7eb)" }}
+                className="absolute right-0 top-full mt-1 w-72 py-1 shadow-lg rounded-lg"
+                style={{ background: "white", border: "1px solid var(--color-neutral-200, #e5e7eb)", zIndex: 500 }}
               >
                 {BANNER_AGENTS.map(agent => (
                   <button

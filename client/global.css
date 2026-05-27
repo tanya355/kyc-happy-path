@@ -385,3 +385,15 @@
 .btn.btn--outlined.btn--disabled .btn-icon svg {
   stroke: var(--color-neutral-400) !important;
 }
+
+/* Recommendation banner action buttons — secondary dark-blue-800 */
+.banner-actions .btn.btn--outlined {
+  color: var(--color-dark-blue-800, #0c1f5c) !important;
+  border-color: var(--color-dark-blue-800, #0c1f5c) !important;
+}
+.banner-actions .btn.btn--outlined .btn-icon svg {
+  stroke: var(--color-dark-blue-800, #0c1f5c) !important;
+}
+.banner-actions .btn.btn--outlined:not(:disabled):hover {
+  background: var(--color-dark-blue-050, #eef2fb) !important;
+}
