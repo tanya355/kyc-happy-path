@@ -56,6 +56,8 @@ interface CaseHeaderProps {
   onSubmitComplete?: () => void;
   reachOutCount?: number;
   onOpenReachOuts?: () => void;
+  onAgentReviewReady?: () => void;
+  onRunAgents?: () => void;
 }
 
 type SubmitPhase = "confirm" | "processing" | "complete";

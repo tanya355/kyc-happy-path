@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   CheckCircle2, Sparkles, Send,
   FileText, AlertTriangle, BookOpen,
-  ArrowRight, Database, RotateCcw, ThumbsUp, ThumbsDown, Loader2,
+  ArrowRight, Database, RotateCcw, ThumbsUp, ThumbsDown,
 } from "lucide-react";
 import { exceptions, type Exception } from "./ExceptionsPanel";
 import { Building2 } from "lucide-react";
@@ -35,6 +35,8 @@ interface SuggestedAction {
   primary: boolean;
   isResolution: boolean;
   rationale: string;
+  /** Step-by-step agent thinking shown immediately when the action is selected */
+  thinkingSteps?: string[];
   /** Post-action reasoning shown after the user selects this action */
   postActionReasoning?: string;
   /** Records that would be modified if this action is applied */
@@ -70,6 +72,13 @@ const exceptionData: ExceptionData[] = [
         label: "Confirm same individual across entities despite title variation",
         value: "confirm-same", primary: true, isResolution: true,
         rationale: "Identity is verified via matching tax ID and contact data across both filings. FATF guidelines permit title variation at different entity levels when the underlying individual is confirmed.",
+        thinkingSteps: [
+          "Retrieving tax ID from Form ADV Part 1 (Pg. 12) and Fund Charter (Pg. 3)",
+          "Cross-referencing contact data across both filings — email and address confirmed as matching",
+          "Evaluating FATF guideline applicability for title variation at different DRG entity levels",
+          "Verifying both filings fall within the same reporting period (Q4 2023)",
+          "Conclusion: Identity confirmed. Title variation is non-material under FATF guidelines — no record change required.",
+        ],
         postActionReasoning: "No data was modified. The title variation is documented as acceptable under FATF guidelines — both records remain as filed and the exception is closed with analyst confirmation.",
         affectedRecords: [
           { entity: "BlackRock Advisors",      caseNumber: "KYC-28821", attribute: "Signatory Title", oldValue: "CEO",               newValue: "CEO (confirmed — no change)" },
@@ -80,6 +89,13 @@ const exceptionData: ExceptionData[] = [
         label: "Standardize title to 'CEO' across all entity records",
         value: "standardize", primary: false, isResolution: true,
         rationale: "Standardizing the title eliminates this discrepancy from future reviews and reduces noise in automated checks going forward.",
+        thinkingSteps: [
+          "Identifying canonical title from primary regulatory filing (Form ADV Part 1)",
+          "Mapping 'CEO, Global Equity Fund' → 'CEO' for BlackRock Institutional record",
+          "Checking downstream impact on automated checks and periodic review triggers",
+          "Generating audit log entry for title standardization change",
+          "Conclusion: Standardization eliminates future discrepancy flags with no compliance risk.",
+        ],
         postActionReasoning: "Title field updated to 'CEO' in both entity records. The Fund Charter qualifier ('Global Equity Fund') was removed from the BlackRock Institutional record to align with the simpler title used in the Form ADV. This change is logged for audit trail purposes.",
         affectedRecords: [
           { entity: "BlackRock Advisors",      caseNumber: "KYC-28821", attribute: "Signatory Title", oldValue: "CEO",               newValue: "CEO" },
@@ -90,6 +106,13 @@ const exceptionData: ExceptionData[] = [
         label: "Flag for additional document request",
         value: "flag-docs", primary: false, isResolution: false,
         rationale: "Use if the title inconsistency cannot be confirmed without a formal clarification or supporting document from the client.",
+        thinkingSteps: [
+          "Evaluating whether title discrepancy can be resolved from existing evidence alone",
+          "Checking client contact availability in CRM for outreach eligibility",
+          "Drafting document request scope: updated signatory confirmation letter required",
+          "Queueing request for reviewer approval before any client communication",
+          "Conclusion: Flagged for outreach. Exception remains open until document is received.",
+        ],
         postActionReasoning: "No records were modified. This documentation request has been logged in the Reach Outs queue. It will be included in the next aggregated client communication draft and requires reviewer approval before any outreach is initiated. This exception remains open until the document is received.",
         affectedRecords: [],
       },
@@ -112,6 +135,13 @@ const exceptionData: ExceptionData[] = [
         label: "Accept Fund Charter as the authoritative title source",
         value: "accept-charter", primary: true, isResolution: true,
         rationale: "The Fund Charter is the most recently filed controlling document for this entity. Accepting it as authoritative resolves the discrepancy without requiring client outreach.",
+        thinkingSteps: [
+          "Retrieving Fund Charter filing date: March 2023 — most recent controlling document on file",
+          "Comparing against Signatory Registry last updated: January 2022 — predates Fund Charter",
+          "Confirming Fund Charter supersedes internal registry per entity governance policy",
+          "Flagging Signatory Registry entry for update in next periodic refresh cycle",
+          "Conclusion: Fund Charter is authoritative. Discrepancy resolved — no client outreach required.",
+        ],
         postActionReasoning: "The Signatory Registry entry for Sarah Williams has been flagged as superseded by the Fund Charter (Pg. 3). The Fund Charter title 'CEO, Global Equity Fund' is now the authoritative record for this entity. No client outreach required.",
         affectedRecords: [
           { entity: "BlackRock Institutional", caseNumber: "KYC-28834", attribute: "Authoritative Title Source", oldValue: "Signatory Registry", newValue: "Fund Charter (Pg. 3)" },
@@ -122,6 +152,13 @@ const exceptionData: ExceptionData[] = [
         label: "Request updated signatory form from client",
         value: "request-form", primary: false, isResolution: false,
         rationale: "Use if the internal signatory record is believed to be outdated and a refreshed form is needed to close the file correctly.",
+        thinkingSteps: [
+          "Assessing whether internal records can independently resolve the discrepancy",
+          "Determining Signatory Registry may be outdated based on document timestamps",
+          "Identifying responsible client contact for document request via CRM",
+          "Preparing request for updated signatory authorization form",
+          "Conclusion: Queued for client outreach — exception remains open pending document receipt.",
+        ],
         postActionReasoning: "No records were modified. A client outreach request has been initiated for an updated signatory form. This exception remains open and will be reassigned to the Relationship Manager queue.",
         affectedRecords: [],
       },
@@ -137,8 +174,28 @@ const exceptionData: ExceptionData[] = [
     evidence: [],
     evidenceRationale: "No supporting documents are currently available for this exception. The absence of the Offering Memorandum is itself the exception — no evidence can be selected until the document is received.",
     suggestedActions: [
-      { label: "Send document request to client contact", value: "send-request", primary: true,  isResolution: false, rationale: "Initiates the document collection process. Required before this exception can be resolved — no waiver is available under current KYC policy." },
-      { label: "Escalate to Relationship Manager",        value: "escalate",     primary: false, isResolution: false, rationale: "Use if the client contact is unresponsive or if the document delay is affecting the overall case deadline." },
+      {
+        label: "Send document request to client contact", value: "send-request", primary: true, isResolution: false,
+        rationale: "Initiates the document collection process. Required before this exception can be resolved — no waiver is available under current KYC policy.",
+        thinkingSteps: [
+          "Confirming no Offering Memorandum on file for BlackRock Institutional in document store",
+          "Checking KYC policy: document receipt required — no waiver pathway available",
+          "Locating responsible client contact and Relationship Manager in CRM",
+          "Generating document request template for Offering Memorandum (periodic refresh cycle)",
+          "Conclusion: Request queued for aggregated outreach draft, pending reviewer approval.",
+        ],
+      },
+      {
+        label: "Escalate to Relationship Manager", value: "escalate", primary: false, isResolution: false,
+        rationale: "Use if the client contact is unresponsive or if the document delay is affecting the overall case deadline.",
+        thinkingSteps: [
+          "Checking outreach history: no prior contact recorded for this document cycle",
+          "Calculating time to case deadline: April 25, 2026 — 12 days remaining",
+          "Assessing escalation threshold: document is overdue by 14 days against SLA",
+          "Identifying assigned Relationship Manager on file in CRM",
+          "Conclusion: Escalation warranted given deadline proximity and absence of prior outreach.",
+        ],
+      },
     ],
   },
   {
@@ -151,8 +208,28 @@ const exceptionData: ExceptionData[] = [
     ],
     evidenceRationale: "The Entity Registry Extract is the primary source for the flagged attribute. It was selected because it is the most recent regulatory filing available and contains the field that triggered automated detection.",
     suggestedActions: [
-      { label: "Confirm data is accurate as reviewed", value: "confirm", primary: true,  isResolution: true,  rationale: "Closes the exception with analyst sign-off. Appropriate when the flagged attribute has been manually verified against source records." },
-      { label: "Reject and request correction",        value: "reject",  primary: false, isResolution: false, rationale: "Use if the data in the entity registry extract contains a verifiable error that must be corrected before the case can proceed." },
+      {
+        label: "Confirm data is accurate as reviewed", value: "confirm", primary: true, isResolution: true,
+        rationale: "Closes the exception with analyst sign-off. Appropriate when the flagged attribute has been manually verified against source records.",
+        thinkingSteps: [
+          "Retrieving flagged attribute value from Entity Registry Extract (Pg. 7)",
+          "Comparing against prior period filing to identify the nature of the delta",
+          "Checking automated detection rule that triggered this exception flag",
+          "Verifying analyst access to source record is sufficient for manual sign-off",
+          "Conclusion: Exception closed with analyst confirmation. Audit trail updated.",
+        ],
+      },
+      {
+        label: "Reject and request correction", value: "reject", primary: false, isResolution: false,
+        rationale: "Use if the data in the entity registry extract contains a verifiable error that must be corrected before the case can proceed.",
+        thinkingSteps: [
+          "Identifying specific data error in Entity Registry Extract — value does not match expected format",
+          "Confirming error is not a labeling artifact — substantive correction required",
+          "Flagging record for correction workflow with responsible data owner",
+          "Generating correction request with error details and expected corrected value",
+          "Conclusion: Record flagged for correction. Exception remains open pending data fix.",
+        ],
+      },
     ],
   },
   {
@@ -165,8 +242,28 @@ const exceptionData: ExceptionData[] = [
     ],
     evidenceRationale: "The Corporate Filing was selected as the sole source document because it contains the specific attribute field where the inconsistency was detected. No other documents cover this attribute at this entity level.",
     suggestedActions: [
-      { label: "Confirm exception is non-material and proceed", value: "confirm-non-material", primary: true,  isResolution: true,  rationale: "Given 99% model confidence, the discrepancy is likely a labeling artifact. Confirmation allows the case to advance without requiring client outreach." },
-      { label: "Request clarification from client",              value: "request-clarify",      primary: false, isResolution: false, rationale: "Use if the discrepancy cannot be explained by internal records alone and client input is needed to formally close it." },
+      {
+        label: "Confirm exception is non-material and proceed", value: "confirm-non-material", primary: true, isResolution: true,
+        rationale: "Given 99% model confidence, the discrepancy is likely a labeling artifact. Confirmation allows the case to advance without requiring client outreach.",
+        thinkingSteps: [
+          "Retrieving flagged attribute from Corporate Filing (Pg. 2) for Entity 13",
+          "Evaluating model confidence: 99% — high certainty of non-material discrepancy",
+          "Cross-checking against industry labeling standards for this attribute type",
+          "Confirming no sanctions, PEP, or adverse media triggers associated with Entity 13",
+          "Conclusion: Discrepancy classified as formatting artifact — safe to confirm and proceed.",
+        ],
+      },
+      {
+        label: "Request clarification from client", value: "request-clarify", primary: false, isResolution: false,
+        rationale: "Use if the discrepancy cannot be explained by internal records alone and client input is needed to formally close it.",
+        thinkingSteps: [
+          "Assessing whether internal records provide sufficient context to close independently",
+          "Determining that discrepancy origin cannot be confirmed without client input",
+          "Identifying client contact and drafting targeted clarification request",
+          "Setting follow-up deadline aligned with case due date (April 25, 2026)",
+          "Conclusion: Clarification request queued — exception remains open pending client response.",
+        ],
+      },
     ],
   },
 ];
@@ -178,6 +275,74 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <p className="text-[11px] font-bold tracking-widest uppercase text-kyc-neutral-600 mb-3">
       {children}
     </p>
+  );
+}
+
+function AgentThinkingStream({ steps }: { steps: string[] }) {
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [cursor, setCursor] = useState(true);
+
+  useEffect(() => {
+    setVisibleCount(0);
+    setCursor(true);
+    let i = 0;
+    const reveal = () => {
+      i++;
+      setVisibleCount(i);
+      if (i < steps.length) setTimeout(reveal, 700 + Math.random() * 400);
+      else setCursor(false);
+    };
+    const t = setTimeout(reveal, 300);
+    return () => clearTimeout(t);
+  }, [steps]);
+
+  return (
+    <div
+      className="border-t px-3 pt-3 pb-3 space-y-2"
+      style={{ borderColor: "var(--color-dark-blue-100)", background: "var(--color-neutral-950, #09090b)" }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-1.5">
+        <Sparkles size={10} className="shrink-0 animate-pulse" style={{ color: "var(--color-dark-blue-300, #7ba3e0)" }} />
+        <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--color-dark-blue-300, #7ba3e0)", letterSpacing: "0.14em" }}>
+          Agent Thinking
+        </span>
+        <span className="ml-1 inline-flex gap-0.5 items-center">
+          {[0,1,2].map(d => (
+            <span
+              key={d}
+              className="w-1 h-1 rounded-full"
+              style={{
+                background: "var(--color-dark-blue-300, #7ba3e0)",
+                animation: `kycDotBounce 1.2s ease-in-out ${d * 0.2}s infinite`,
+              }}
+            />
+          ))}
+        </span>
+      </div>
+
+      {/* Streaming steps */}
+      <div className="font-mono space-y-1.5">
+        {steps.slice(0, visibleCount).map((step, i) => (
+          <div
+            key={i}
+            className="flex items-start gap-2 text-[11px] leading-snug"
+            style={{ animation: "fadeSlideUp 0.35s ease both" }}
+          >
+            <span style={{ color: "var(--color-dark-blue-400, #5c88d4)" }} className="shrink-0 select-none">›</span>
+            <span style={{ color: i === visibleCount - 1 && cursor ? "#e2e8f0" : "#94a3b8" }}>
+              {step}
+              {i === visibleCount - 1 && cursor && (
+                <span
+                  className="inline-block w-[6px] h-[12px] ml-0.5 align-text-bottom"
+                  style={{ background: "#e2e8f0", animation: "pulse 1s ease-in-out infinite" }}
+                />
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -205,20 +370,6 @@ interface ResolutionSectionProps {
 
 // ── Action expansion sub-component ────────────────────────────────────
 
-function LoadingDots() {
-  return (
-    <span className="inline-flex items-center gap-[3px]" aria-hidden="true">
-      {[0, 1, 2].map(i => (
-        <span
-          key={i}
-          className="w-[5px] h-[5px] rounded-full bg-current"
-          style={{ animation: `kycDotBounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
-        />
-      ))}
-    </span>
-  );
-}
-
 interface ActionExpansionProps {
   action: SuggestedAction;
   phase: RerunPhase;
@@ -231,47 +382,18 @@ interface ActionExpansionProps {
 function ActionExpansion({ action, phase, feedback, onRerun, onFeedback }: ActionExpansionProps) {
   const hasRecords = (action.affectedRecords ?? []).length > 0;
 
-  // ── Loading state ──────────────────────────────────────────────────
+  // ── Loading state: agentic thinking stream ────────────────────────
   if (phase === "loading") {
     return (
-      <div
-        className="border-t px-4 py-4 space-y-3"
-        style={{ borderColor: "var(--color-neutral-200)", background: "var(--color-neutral-050)" }}
-      >
-        <div className="flex items-center gap-2">
-          <Loader2 size={13} className="text-kyc-neutral-600 animate-spin shrink-0" />
-          <p className="text-[11px] font-semibold text-kyc-neutral-700">
-            Agent is re-running analysis <LoadingDots />
-          </p>
-        </div>
-
-        {/* Skeleton rows */}
-        <div className="space-y-2">
-          {[80, 60, 90].map((w, i) => (
-            <div key={i} className="h-3 rounded" style={{ width: `${w}%`, background: "var(--color-neutral-200)", animation: "pulse 1.5s ease-in-out infinite" }} />
-          ))}
-        </div>
-
-        {/* Skeleton record table */}
-        {hasRecords && (
-          <div className="border" style={{ borderColor: "var(--color-neutral-200)" }}>
-            <div className="grid grid-cols-3 px-2 py-1.5" style={{ background: "var(--color-neutral-100)" }}>
-              {["Entity / Case", "Attribute", "Change"].map(h => (
-                <div key={h} className="h-2.5 rounded" style={{ width: "70%", background: "var(--color-neutral-300)", animation: "pulse 1.5s ease-in-out infinite" }} />
-              ))}
-            </div>
-            {(action.affectedRecords ?? []).map((_, i) => (
-              <div key={i} className="grid grid-cols-3 px-2 py-2.5 border-t gap-2" style={{ borderColor: "var(--color-neutral-200)" }}>
-                {[75, 60, 85].map((w, j) => (
-                  <div key={j} className="h-2.5 rounded" style={{ width: `${w}%`, background: "var(--color-neutral-200)", animation: "pulse 1.5s ease-in-out infinite" }} />
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-
-        <p className="text-[11px] text-kyc-neutral-500 italic">Evaluating impact across affected entities…</p>
-      </div>
+      <AgentThinkingStream
+        steps={action.thinkingSteps ?? [
+          "Loading context for this exception…",
+          "Cross-referencing source documents and entity records…",
+          "Evaluating compliance policy applicability…",
+          "Assessing impact across affected entities…",
+          "Generating recommendation…",
+        ]}
+      />
     );
   }
 
