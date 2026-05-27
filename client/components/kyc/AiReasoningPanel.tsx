@@ -298,22 +298,25 @@ function AgentThinkingStream({ steps }: { steps: string[] }) {
 
   return (
     <div
-      className="border-t px-3 pt-3 pb-3 space-y-2"
-      style={{ borderColor: "var(--color-dark-blue-100)", background: "var(--color-neutral-950, #09090b)" }}
+      className="border-t px-3 pt-3 pb-3"
+      style={{ borderColor: "var(--color-neutral-200)", background: "white" }}
     >
       {/* Header */}
-      <div className="flex items-center gap-1.5">
-        <Sparkles size={10} className="shrink-0 animate-pulse" style={{ color: "var(--color-dark-blue-300, #7ba3e0)" }} />
-        <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--color-dark-blue-300, #7ba3e0)", letterSpacing: "0.14em" }}>
-          Agent Thinking
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <Sparkles size={11} className="shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />
+        <span
+          className="text-[11px] font-semibold"
+          style={{ color: "var(--color-dark-blue-700)" }}
+        >
+          Agent is working
         </span>
-        <span className="ml-1 inline-flex gap-0.5 items-center">
-          {[0,1,2].map(d => (
+        <span className="inline-flex gap-[3px] items-center ml-0.5">
+          {[0, 1, 2].map(d => (
             <span
               key={d}
               className="w-1 h-1 rounded-full"
               style={{
-                background: "var(--color-dark-blue-300, #7ba3e0)",
+                background: "var(--color-dark-blue-400)",
                 animation: `kycDotBounce 1.2s ease-in-out ${d * 0.2}s infinite`,
               }}
             />
@@ -322,26 +325,44 @@ function AgentThinkingStream({ steps }: { steps: string[] }) {
       </div>
 
       {/* Streaming steps */}
-      <div className="font-mono space-y-1.5">
-        {steps.slice(0, visibleCount).map((step, i) => (
-          <div
-            key={i}
-            className="flex items-start gap-2 text-[11px] leading-snug"
-            style={{ animation: "fadeSlideUp 0.35s ease both" }}
-          >
-            <span style={{ color: "var(--color-dark-blue-400, #5c88d4)" }} className="shrink-0 select-none">›</span>
-            <span style={{ color: i === visibleCount - 1 && cursor ? "#e2e8f0" : "#94a3b8" }}>
-              {step}
-              {i === visibleCount - 1 && cursor && (
-                <span
-                  className="inline-block w-[6px] h-[12px] ml-0.5 align-text-bottom"
-                  style={{ background: "#e2e8f0", animation: "pulse 1s ease-in-out infinite" }}
-                />
-              )}
-            </span>
-          </div>
-        ))}
-      </div>
+      <ol className="space-y-2">
+        {steps.slice(0, visibleCount).map((step, i) => {
+          const isActive = i === visibleCount - 1;
+          return (
+            <li
+              key={i}
+              className="flex items-start gap-2.5"
+              style={{ animation: "fadeSlideUp 0.3s ease both" }}
+            >
+              {/* Step indicator */}
+              <span
+                className="shrink-0 mt-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold"
+                style={{
+                  background: isActive && cursor
+                    ? "var(--color-dark-blue-600)"
+                    : "var(--color-dark-blue-100)",
+                  color: isActive && cursor
+                    ? "white"
+                    : "var(--color-dark-blue-700)",
+                  transition: "background 0.3s",
+                }}
+              >
+                {isActive && cursor ? (
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" style={{ animation: "pulse 1s ease-in-out infinite" }} />
+                ) : (
+                  i + 1
+                )}
+              </span>
+              <span
+                className="text-[11px] leading-snug pt-0.5"
+                style={{ color: isActive && cursor ? "var(--color-neutral-900)" : "var(--color-neutral-600)" }}
+              >
+                {step}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
