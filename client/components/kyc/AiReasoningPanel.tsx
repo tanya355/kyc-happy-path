@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   CheckCircle2, Sparkles, Send,
   ExternalLink, FileText, AlertTriangle, BookOpen,
-  ArrowRight, Database, RotateCcw, ThumbsUp, ThumbsDown, Loader2,
+  ArrowRight, Database, RotateCcw, ThumbsUp, ThumbsDown, Loader2, Clock,
 } from "lucide-react";
 import { Button } from "@kpmg-us/ad-design-lib";
 import { exceptions, type Exception } from "./ExceptionsPanel";
@@ -232,6 +232,85 @@ interface ResolutionSectionProps {
   onOpenReachOuts?: () => void;
 }
 
+// ── Inline streaming agent steps ──────────────────────────────────────
+
+const INLINE_STEPS = [
+  "Loading exception context and selected action…",
+  "Cross-referencing source documents for consistency…",
+  "Evaluating impact across affected entities…",
+  "Finalising post-action reasoning…",
+];
+
+function InlineAgentSteps() {
+  const [revealed, setRevealed] = useState<string[]>([]);
+  const [typing, setTyping] = useState("");
+  const stepRef = useRef(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const typeStep = (text: string, cb: () => void) => {
+      let i = 0;
+      const tick = () => {
+        if (cancelled) return;
+        i++;
+        setTyping(text.slice(0, i));
+        if (i < text.length) setTimeout(tick, 22);
+        else setTimeout(cb, 280);
+      };
+      setTimeout(tick, 60);
+    };
+
+    const advance = () => {
+      if (cancelled) return;
+      const step = INLINE_STEPS[stepRef.current];
+      if (!step) return;
+      typeStep(step, () => {
+        if (cancelled) return;
+        setRevealed(prev => [...prev, step]);
+        setTyping("");
+        stepRef.current += 1;
+        if (stepRef.current < INLINE_STEPS.length) setTimeout(advance, 200);
+      });
+    };
+    advance();
+    return () => { cancelled = true; };
+  }, []);
+
+  return (
+    <div
+      className="border-t px-4 py-4 space-y-2.5"
+      style={{ borderColor: "var(--color-neutral-200)", background: "var(--color-neutral-050)" }}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <Loader2 size={12} className="animate-spin shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />
+        <p className="text-[11px] font-bold" style={{ color: "var(--color-dark-blue-700)" }}>
+          Agent re-running analysis
+        </p>
+      </div>
+      <div className="space-y-1.5 ml-5">
+        {revealed.map((s, i) => (
+          <div key={i} className="flex items-start gap-1.5">
+            <CheckCircle2 size={10} className="shrink-0 mt-0.5" style={{ color: "var(--color-green-600)" }} />
+            <p className="text-[10.5px] leading-snug" style={{ color: "var(--color-neutral-600)" }}>{s}</p>
+          </div>
+        ))}
+        {typing && (
+          <div className="flex items-start gap-1.5">
+            <Clock size={10} className="shrink-0 mt-0.5" style={{ color: "var(--color-dark-blue-400)" }} />
+            <p className="text-[10.5px] leading-snug" style={{ color: "var(--color-dark-blue-700)" }}>
+              {typing}
+              <span
+                className="inline-block w-[1.5px] h-[10px] ml-0.5 align-text-bottom animate-pulse"
+                style={{ background: "var(--color-dark-blue-600)" }}
+              />
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Action expansion sub-component ────────────────────────────────────
 
 function LoadingDots() {
@@ -263,46 +342,7 @@ function ActionExpansion({ action, phase, feedback, onRerun, onFeedback, onOpenR
 
   // ── Loading state ──────────────────────────────────────────────────
   if (phase === "loading") {
-    return (
-      <div
-        className="border-t px-4 py-4 space-y-3"
-        style={{ borderColor: "var(--color-neutral-200)", background: "var(--color-neutral-050)" }}
-      >
-        <div className="flex items-center gap-2">
-          <Loader2 size={13} className="text-kyc-neutral-600 animate-spin shrink-0" />
-          <p className="text-[11px] font-semibold text-kyc-neutral-700">
-            Agent is re-running analysis <LoadingDots />
-          </p>
-        </div>
-
-        {/* Skeleton rows */}
-        <div className="space-y-2">
-          {[80, 60, 90].map((w, i) => (
-            <div key={i} className="h-3 rounded" style={{ width: `${w}%`, background: "var(--color-neutral-200)", animation: "pulse 1.5s ease-in-out infinite" }} />
-          ))}
-        </div>
-
-        {/* Skeleton record table */}
-        {hasRecords && (
-          <div className="border" style={{ borderColor: "var(--color-neutral-200)" }}>
-            <div className="grid grid-cols-3 px-2 py-1.5" style={{ background: "var(--color-neutral-100)" }}>
-              {["Entity / Case", "Attribute", "Change"].map(h => (
-                <div key={h} className="h-2.5 rounded" style={{ width: "70%", background: "var(--color-neutral-300)", animation: "pulse 1.5s ease-in-out infinite" }} />
-              ))}
-            </div>
-            {(action.affectedRecords ?? []).map((_, i) => (
-              <div key={i} className="grid grid-cols-3 px-2 py-2.5 border-t gap-2" style={{ borderColor: "var(--color-neutral-200)" }}>
-                {[75, 60, 85].map((w, j) => (
-                  <div key={j} className="h-2.5 rounded" style={{ width: `${w}%`, background: "var(--color-neutral-200)", animation: "pulse 1.5s ease-in-out infinite" }} />
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-
-        <p className="text-[11px] text-kyc-neutral-500 italic">Evaluating impact across affected entities…</p>
-      </div>
-    );
+    return <InlineAgentSteps />;
   }
 
   // ── Done state ─────────────────────────────────────────────────────

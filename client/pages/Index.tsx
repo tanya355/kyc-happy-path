@@ -12,6 +12,7 @@ import { AuditLogPanel, type AuditEntry } from "@/components/kyc/AuditLogPanel";
 import { ReachOutModal, type ReachOut } from "@/components/kyc/ReachOutModal";
 import { EntityDetailPanel } from "@/components/kyc/EntityDetailPanel";
 import { AgentReasoningWindow } from "@/components/kyc/AgentReasoningWindow";
+import { AgentReviewPanel } from "@/components/kyc/AgentReviewPanel";
 
 const LEFT_W      = 272; // fixed left panel width
 const RIGHT_MIN            = 280;
@@ -21,7 +22,7 @@ const rightDefault = () => Math.round(window.innerWidth * 0.30);
 
 const TOTAL_EXCEPTIONS = 5;
 
-type RightTab = "tree" | "document";
+type RightTab = "tree" | "document" | "reasoning";
 
 const ENTITY_CASE_NUMBERS: Record<string, string> = {
   "BlackRock Advisors":      "KYC-28821",
@@ -57,10 +58,13 @@ export default function Index() {
   const [rightTab, setRightTab] = useState<RightTab>("tree");
   const [treeViewMode, setTreeViewMode] = useState<"child" | "parent">("child");
   const [selectedAttr, setSelectedAttr] = useState<AttrRow | null>(null);
-  const [agentWindowOpen, setAgentWindowOpen] = useState(true);
+  const [agentWindowOpen, setAgentWindowOpen] = useState(false);
+  const [agentPanelOpen, setAgentPanelOpen] = useState(false);
+  const [agentPanelCollapsed, setAgentPanelCollapsed] = useState(false);
 
   const handleAttrSelect = (attr: AttrRow | null) => {
     setSelectedAttr(attr);
+    if (attr) setRightTab("reasoning");
   };
   const [resolvedExceptions, setResolvedExceptions] = useState<Set<number>>(new Set());
 
@@ -132,6 +136,8 @@ export default function Index() {
         onSubmitComplete={() => { setAuditPostSubmit(true); }}
         reachOutCount={reachOuts.filter(r => r.status === "pending").length}
         onOpenReachOuts={() => setReachOutOpen(true)}
+        onAgentReviewReady={() => { setAgentPanelOpen(true); setAgentPanelCollapsed(false); }}
+        onRunAgents={() => { setAgentWindowOpen(true); }}
       />
 
       {/* ── Selected Entities strip (frozen) ── */}
@@ -336,6 +342,23 @@ export default function Index() {
                 </svg>
                 Document View
               </button>
+              {selectedAttr && (
+                <button
+                  onClick={() => setRightTab("reasoning")}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold border-b-2 transition-colors ${
+                    rightTab === "reasoning"
+                      ? "border-ds-dark-blue-500 text-ds-dark-blue-600"
+                      : "border-transparent text-kyc-neutral-600 hover:text-kyc-neutral-800"
+                  }`}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4l3 3"/>
+                  </svg>
+                  Reasoning
+                </button>
+              )}
 
               {rightTab === "document" && (
                 <button
@@ -364,8 +387,31 @@ export default function Index() {
               {rightTab === "document" && (
                 <DocumentView docName={activeDocName ?? undefined} />
               )}
+              {rightTab === "reasoning" && selectedAttr && (
+                <div className="h-full overflow-y-auto" style={{ minHeight: 0 }}>
+                  <ReasoningDrawer
+                    attr={selectedAttr}
+                    onClose={() => { setSelectedAttr(null); setRightTab("tree"); }}
+                  />
+                </div>
+              )}
+              {rightTab === "reasoning" && !selectedAttr && (
+                <div className="flex items-center justify-center h-full text-[12px] text-kyc-neutral-500">
+                  Select an attribute to view reasoning
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Agent Review Panel – collapsible 4th column */}
+          {agentPanelOpen && (
+            <AgentReviewPanel
+              collapsed={agentPanelCollapsed}
+              onToggleCollapse={() => setAgentPanelCollapsed(c => !c)}
+              onClose={() => setAgentPanelOpen(false)}
+              onAllActioned={() => {}}
+            />
+          )}
 
         </div>
       </main>
@@ -375,37 +421,6 @@ export default function Index() {
         <AgentReasoningWindow onClose={() => setAgentWindowOpen(false)} />
       )}
 
-      {/* ── Agent Reasoning Modal ── */}
-      {selectedAttr && (
-        <div
-          className="fixed inset-0 z-[280] flex items-center justify-center"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Agent reasoning for ${selectedAttr.label}`}
-        >
-          <div
-            className="absolute inset-0"
-            style={{ background: "rgba(0,16,48,0.45)", backdropFilter: "blur(3px)" }}
-            onClick={() => setSelectedAttr(null)}
-            aria-hidden="true"
-          />
-          <div
-            className="relative flex flex-col overflow-hidden"
-            style={{
-              width: "min(440px, 96vw)",
-              height: "min(80vh, 700px)",
-              borderRadius: 12,
-              boxShadow: "0 8px 40px rgba(0,16,48,0.18)",
-              border: "1px solid var(--color-neutral-200)",
-            }}
-          >
-            <ReasoningDrawer
-              attr={selectedAttr}
-              onClose={() => setSelectedAttr(null)}
-            />
-          </div>
-        </div>
-      )}
 
       {/* ── Reach Outs Modal ── */}
       {reachOutOpen && (

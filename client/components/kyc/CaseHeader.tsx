@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Send, Building2, Users, CheckCircle2, X, Check, AlertOctagon, XCircle, Info, AlertTriangle, FileText, Bot, Loader2, CheckCircle, AlertCircle, ChevronDown, ChevronUp, ClipboardList, Mail } from "lucide-react";
+import { Send, Building2, Users, CheckCircle2, X, Check, AlertOctagon, XCircle, Info, AlertTriangle, FileText, Bot, Loader2, CheckCircle, AlertCircle, ChevronDown, ChevronUp, ClipboardList, Mail, Play } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@kpmg-us/ad-design-lib";
@@ -8,6 +8,7 @@ import { DrgModal } from "./DrgModal";
 import { exceptions } from "./ExceptionsPanel";
 import { CaseDocumentModal } from "./CaseDocumentModal";
 import { CaseAgenticReasoningModal } from "./CaseAgenticReasoningModal";
+import { AVAILABLE_AGENTS } from "./RunAgentsModal";
 
 const ENTITY_CASE_NUMBERS: Record<string, string> = {
   "BlackRock Advisors":      "KYC-28821",
@@ -123,6 +124,8 @@ interface CaseHeaderProps {
   onSubmitComplete?: () => void;
   reachOutCount?: number;
   onOpenReachOuts?: () => void;
+  onAgentReviewReady?: () => void;
+  onRunAgents?: (agentIds: string[]) => void;
 }
 
 type SubmitPhase = "confirm" | "processing" | "complete";
@@ -996,7 +999,7 @@ function AgentReviewModal({ onClose, onAllActioned }: { onClose: () => void; onA
   );
 }
 
-export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAuditEntry, onOpenAuditLog, onSubmitComplete, reachOutCount = 0, onOpenReachOuts }: CaseHeaderProps) {
+export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAuditEntry, onOpenAuditLog, onSubmitComplete, reachOutCount = 0, onOpenReachOuts, onAgentReviewReady, onRunAgents }: CaseHeaderProps) {
   const entityMeta = focusedEntity ? ENTITY_META[focusedEntity] : null;
   const allResolved = resolvedCount >= totalExceptions;
   const [drgValue] = useState(drgEntities[0]);
@@ -1004,10 +1007,33 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
   const [showEscalate, setShowEscalate] = useState(false);
   const [showDrgModal, setShowDrgModal] = useState(false);
   const [agentRunning, setAgentRunning] = useState(false);
-  const [showAgentReview, setShowAgentReview] = useState(false);
   const [agentReviewComplete, setAgentReviewComplete] = useState(false);
   const [showCaseReasoning, setShowCaseReasoning] = useState(false);
+  const [agentsDropdownOpen, setAgentsDropdownOpen] = useState(false);
+  const [selectedAgents, setSelectedAgents] = useState<Set<string>>(
+    new Set(AVAILABLE_AGENTS.map(a => a.id))
+  );
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!agentsDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setAgentsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [agentsDropdownOpen]);
+
+  const toggleAgent = (id: string) =>
+    setSelectedAgents(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const runAgentReview = () => {
     if (agentRunning) return;
@@ -1016,7 +1042,8 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
     setTimeout(() => {
       setAgentRunning(false);
       toast.dismiss("agent-review");
-      setShowAgentReview(true);
+      onAgentReviewReady?.();
+      setAgentReviewComplete(true);
       onAuditEntry?.({
         id: `agent-review-${Date.now()}`,
         timestamp: new Date(),
@@ -1067,9 +1094,6 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
       )}
       {showDrgModal && (
         <DrgModal onClose={() => setShowDrgModal(false)} />
-      )}
-      {showAgentReview && (
-        <AgentReviewModal onClose={() => setShowAgentReview(false)} onAllActioned={() => setAgentReviewComplete(true)} />
       )}
       {showCaseReasoning && (
         <CaseAgenticReasoningModal onClose={() => setShowCaseReasoning(false)} />
@@ -1157,14 +1181,107 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
             <div className="shrink-0 self-center flex items-center gap-3">
               {/* Secondary actions */}
               <div className="flex items-center gap-1">
-                <Button
-                  variant="text"
-                  size="small"
-                  label="Cancel"
-                  showIconLeading
-                  icon={<XCircle size={13} />}
-                  onClick={() => navigate("/dashboard")}
-                />
+                {/* Run Agents dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setAgentsDropdownOpen(o => !o)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded border transition-colors"
+                    style={{
+                      borderColor: agentsDropdownOpen ? "var(--color-dark-blue-400)" : "var(--color-neutral-300)",
+                      background: agentsDropdownOpen ? "var(--color-dark-blue-000)" : "white",
+                      color: "var(--color-neutral-800)",
+                    }}
+                    aria-expanded={agentsDropdownOpen}
+                    aria-haspopup="true"
+                  >
+                    {agentRunning
+                      ? <Loader2 size={11} className="animate-spin shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />
+                      : <Play size={11} className="shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />}
+                    <span>Run Agents</span>
+                    <ChevronDown size={10} style={{ color: "var(--color-neutral-400)" }} />
+                  </button>
+
+                  {agentsDropdownOpen && (
+                    <div
+                      className="absolute left-0 top-full mt-1 z-[350] flex flex-col bg-white"
+                      style={{
+                        width: 280,
+                        border: "1px solid var(--color-neutral-200)",
+                        borderRadius: "var(--corner-200)",
+                        boxShadow: "var(--shadow-400)",
+                      }}
+                    >
+                      {/* Agent list */}
+                      <div className="px-3 pt-3 pb-2">
+                        <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--color-neutral-500)" }}>
+                          Select Agents to Run
+                        </p>
+                        <div className="space-y-1">
+                          {AVAILABLE_AGENTS.map(agent => (
+                            <label
+                              key={agent.id}
+                              className="flex items-center gap-2.5 px-2 py-1.5 rounded cursor-pointer transition-colors hover:bg-neutral-50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedAgents.has(agent.id)}
+                                onChange={() => toggleAgent(agent.id)}
+                                className="cursor-pointer"
+                              />
+                              <span className="text-[11px] font-medium" style={{ color: "var(--color-neutral-800)" }}>
+                                {agent.name}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Run button */}
+                      <div className="px-3 pb-2">
+                        <button
+                          onClick={() => {
+                            onRunAgents?.(Array.from(selectedAgents));
+                            setAgentsDropdownOpen(false);
+                          }}
+                          disabled={selectedAgents.size === 0}
+                          className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded transition-colors"
+                          style={{
+                            background: selectedAgents.size > 0 ? "var(--color-dark-blue-600)" : "var(--color-neutral-200)",
+                            color: selectedAgents.size > 0 ? "white" : "var(--color-neutral-400)",
+                          }}
+                        >
+                          <Play size={10} />
+                          Run {selectedAgents.size} Agent{selectedAgents.size !== 1 ? "s" : ""}
+                        </button>
+                      </div>
+
+                      {/* Divider */}
+                      <div style={{ height: 1, background: "var(--color-neutral-100)" }} />
+
+                      {/* Agent Review option */}
+                      <div className="px-3 py-2">
+                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--color-neutral-500)" }}>
+                          Review
+                        </p>
+                        <button
+                          onClick={() => {
+                            setAgentsDropdownOpen(false);
+                            runAgentReview();
+                          }}
+                          disabled={agentRunning}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-colors hover:bg-neutral-50"
+                        >
+                          {agentRunning
+                            ? <Loader2 size={12} className="animate-spin shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />
+                            : <Bot size={12} className="shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />}
+                          <span className="text-[11px] font-semibold" style={{ color: "var(--color-neutral-800)" }}>
+                            {agentRunning ? "Running review…" : "Agent Review"}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {onOpenAuditLog && (
                   <Button
                     variant="text"
@@ -1204,14 +1321,12 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
               {/* Primary actions */}
               <div className="flex items-center gap-2 case-header-actions">
                 <Button
-                  variant="outlined"
+                  variant="text"
                   size="small"
-                  label={agentRunning ? "Running…" : "Agent Review"}
+                  label="Cancel"
                   showIconLeading
-                  icon={agentRunning ? <Loader2 size={12} className="animate-spin" aria-hidden /> : <Bot size={12} aria-hidden />}
-                  disabled={agentRunning}
-                  onClick={runAgentReview}
-                  aria-label="Run agent review of analyst work"
+                  icon={<XCircle size={13} />}
+                  onClick={() => navigate("/dashboard")}
                 />
                 <Button
                   variant="outlined"
