@@ -173,7 +173,7 @@ export function TopNav() {
 
             {agentDropOpen && (
               <div
-                className="absolute right-0 top-full mt-1 w-72 py-1 shadow-lg rounded-lg"
+                className="absolute right-0 bottom-full mb-1 w-72 py-1 shadow-lg rounded-lg"
                 style={{ background: "white", border: "1px solid var(--color-neutral-200, #e5e7eb)", zIndex: 500 }}
               >
                 {BANNER_AGENTS.map(agent => (
