@@ -138,7 +138,7 @@ export function TopNav() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0" style={{ transform: "scale(0.8)", transformOrigin: "center right" }}>
           {ranAgent ? (
             <span
               className="flex items-center gap-1 text-[11px] font-medium px-3 py-1 rounded"
