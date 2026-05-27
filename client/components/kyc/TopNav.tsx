@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { User, Settings, LogOut, Zap, ChevronDown, Check } from "lucide-react";
 import { FloatingTopAppBar, Button } from "@kpmg-us/ad-design-lib";
@@ -22,8 +23,10 @@ export function TopNav() {
   const [menuOpen, setMenuOpen]           = useState(false);
   const [agentDropOpen, setAgentDropOpen] = useState(false);
   const [ranAgent, setRanAgent]           = useState(false);
-  const menuRef      = useRef<HTMLDivElement>(null);
-  const agentDropRef = useRef<HTMLDivElement>(null);
+  const [dropRect, setDropRect]           = useState<DOMRect | null>(null);
+  const menuRef        = useRef<HTMLDivElement>(null);
+  const agentDropRef   = useRef<HTMLDivElement>(null);
+  const agentBtnRef    = useRef<HTMLDivElement>(null);
   const [activeAgent, setActiveAgent]     = useState(BANNER_AGENTS[0]);
 
   useEffect(() => {
@@ -167,21 +170,35 @@ export function TopNav() {
 
           {/* Run Agent dropdown */}
           <div ref={agentDropRef} className="relative">
-            <Button
-              variant="outlined"
-              size="small"
-              label="Run Agent"
-              showIconTrailing
-              icon={<ChevronDown size={11} aria-hidden style={{ transition: "transform 0.15s", transform: agentDropOpen ? "rotate(180deg)" : "none" }} />}
-              onClick={() => setAgentDropOpen(o => !o)}
-              aria-expanded={agentDropOpen}
-              aria-haspopup="true"
-            />
+            <div ref={agentBtnRef}>
+              <Button
+                variant="outlined"
+                size="small"
+                label="Run Agent"
+                showIconTrailing
+                icon={<ChevronDown size={11} aria-hidden style={{ transition: "transform 0.15s", transform: agentDropOpen ? "rotate(180deg)" : "none" }} />}
+                onClick={() => {
+                  const rect = agentBtnRef.current?.getBoundingClientRect() ?? null;
+                  setDropRect(rect);
+                  setAgentDropOpen(o => !o);
+                }}
+                aria-expanded={agentDropOpen}
+                aria-haspopup="true"
+              />
+            </div>
 
-            {agentDropOpen && (
+            {agentDropOpen && dropRect && createPortal(
               <div
-                className="absolute right-0 top-full mt-1 w-72 py-1 shadow-lg rounded-lg"
-                style={{ background: "white", border: "1px solid var(--color-neutral-200, #e5e7eb)", zIndex: 500 }}
+                className="py-1 shadow-xl rounded-lg"
+                style={{
+                  position: "fixed",
+                  top: dropRect.bottom + 6,
+                  right: window.innerWidth - dropRect.right,
+                  width: 288,
+                  background: "white",
+                  border: "1px solid var(--color-neutral-200, #e5e7eb)",
+                  zIndex: 9999,
+                }}
               >
                 {BANNER_AGENTS.map(agent => (
                   <button
@@ -200,7 +217,8 @@ export function TopNav() {
                     </span>
                   </button>
                 ))}
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>
