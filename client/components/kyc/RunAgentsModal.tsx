@@ -255,7 +255,6 @@ export function RunAgentsModal({ onClose, onRun }: RunAgentsModalProps) {
               variant="filled"
               size="small"
               label={`Run ${selected.size} Agent${selected.size !== 1 ? "s" : ""}`}
-              showIconLeading
               icon={<Play size={11} />}
               disabled={selected.size === 0}
               onClick={() => { onRun(Array.from(selected)); onClose(); }}
