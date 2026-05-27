@@ -400,14 +400,6 @@ function KpiTicker({ label, frames, icon, onSelect, className, style }: { label:
   );
 }
 
-const AGENT_STATUSES = [
-  "Monitoring active cases...",
-  "Analyzing SLA risk patterns...",
-  "Scanning compliance signals...",
-  "Reviewing Decision Support queue...",
-  "Projecting case volume trends...",
-  "Evaluating PEP & sanctions flags...",
-];
 
 export default function AnalystDashboard() {
   const [aiInput, setAiInput] = useState("");
@@ -444,22 +436,10 @@ export default function AnalystDashboard() {
   }
   const [chartRange, setChartRange] = useState("Last 7 Days");
   const [forecastRange, setForecastRange] = useState("30d");
-  const [agentStatusIdx, setAgentStatusIdx] = useState(0);
-  const [statusVisible, setStatusVisible] = useState(true);
   const [activeAction, setActiveAction] = useState<number | null>(null);
   const [kpiContext, setKpiContext] = useState<{ label: string; value: string; unit: string; summary: string; points: string[]; allFrames?: TickerFrame[] } | null>(null);
   const [expandedPanel, setExpandedPanel] = useState<"ai" | "collab" | null>(null);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStatusVisible(false);
-      setTimeout(() => {
-        setAgentStatusIdx(i => (i + 1) % AGENT_STATUSES.length);
-        setStatusVisible(true);
-      }, 400);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, []);
 
   const activePeriod = PERIODS.find(p => p.label === "Today")!;
   const metrics = activePeriod.kpis;

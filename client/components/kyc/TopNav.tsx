@@ -11,6 +11,7 @@ const tabs = [
 
 const BANNER_AGENTS = [
   { id: "bulk-triage",     label: "Bulk Triage Selected Cases",   desc: "Best for high-risk DRG entities in queue" },
+  { id: "agent-review",   label: "Agent Review",                  desc: "AI reviews analyst decisions across all exceptions" },
   { id: "doc-extraction",  label: "Document Extraction Agent",     desc: "Extract KYC fields from uploaded documents" },
   { id: "sanctions-check", label: "Sanctions Screening Agent",     desc: "Cross-check entities against global watchlists" },
 ];
@@ -154,7 +155,13 @@ export function TopNav() {
               variant="outlined"
               size="small"
               label="Run Recommended"
-              onClick={() => { setRanAgent(true); setTimeout(() => setRanAgent(false), 3000); }}
+              onClick={() => {
+                if (activeAgent.id === "agent-review") {
+                  window.dispatchEvent(new CustomEvent("kyc-run-agent-review"));
+                }
+                setRanAgent(true);
+                setTimeout(() => setRanAgent(false), 3000);
+              }}
             />
           )}
 

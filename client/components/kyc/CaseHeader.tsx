@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Send, CheckCircle2, X, Check, AlertOctagon, XCircle, Info, AlertTriangle, Bot, Loader2, ChevronDown, ChevronUp, ClipboardList, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -886,6 +886,12 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
   const [agentReviewComplete, setAgentReviewComplete] = useState(false);
   const [showCaseReasoning, setShowCaseReasoning] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handler = () => runAgentReview();
+    window.addEventListener("kyc-run-agent-review", handler);
+    return () => window.removeEventListener("kyc-run-agent-review", handler);
+  }, [agentRunning]);
 
   const runAgentReview = () => {
     if (agentRunning) return;
