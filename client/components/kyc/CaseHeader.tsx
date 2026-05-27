@@ -1183,100 +1183,146 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
               <div className="flex items-center gap-1">
                 {/* Run Agents dropdown */}
                 <div className="relative" ref={dropdownRef}>
-                  <button
+                  {/* Trigger — DS outlined small button style */}
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    label="Run Agents"
+                    showIconLeading
+                    showIconTrailing
+                    icon={agentRunning
+                      ? <Loader2 size={12} className="animate-spin" aria-hidden />
+                      : <Play size={12} aria-hidden />}
+                    trailingIcon={<ChevronDown size={11} aria-hidden />}
                     onClick={() => setAgentsDropdownOpen(o => !o)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded border transition-colors"
-                    style={{
-                      borderColor: agentsDropdownOpen ? "var(--color-dark-blue-400)" : "var(--color-neutral-300)",
-                      background: agentsDropdownOpen ? "var(--color-dark-blue-000)" : "white",
-                      color: "var(--color-neutral-800)",
-                    }}
                     aria-expanded={agentsDropdownOpen}
                     aria-haspopup="true"
-                  >
-                    {agentRunning
-                      ? <Loader2 size={11} className="animate-spin shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />
-                      : <Play size={11} className="shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />}
-                    <span>Run Agents</span>
-                    <ChevronDown size={10} style={{ color: "var(--color-neutral-400)" }} />
-                  </button>
+                  />
 
                   {agentsDropdownOpen && (
                     <div
-                      className="absolute left-0 top-full mt-1 z-[350] flex flex-col bg-white"
+                      className="absolute left-0 top-full mt-1 z-[350] flex flex-col bg-white overflow-hidden"
                       style={{
-                        width: 280,
+                        width: 296,
                         border: "1px solid var(--color-neutral-200)",
                         borderRadius: "var(--corner-200)",
                         boxShadow: "var(--shadow-400)",
                       }}
                     >
-                      {/* Agent list */}
-                      <div className="px-3 pt-3 pb-2">
-                        <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--color-neutral-500)" }}>
+                      {/* Section header */}
+                      <div
+                        className="px-4 py-2.5"
+                        style={{ borderBottom: "1px solid var(--color-neutral-100)", background: "var(--color-neutral-050)" }}
+                      >
+                        <p
+                          className="text-[9px] font-bold uppercase tracking-widest"
+                          style={{ color: "var(--color-neutral-500)" }}
+                        >
                           Select Agents to Run
                         </p>
-                        <div className="space-y-1">
-                          {AVAILABLE_AGENTS.map(agent => (
-                            <label
-                              key={agent.id}
-                              className="flex items-center gap-2.5 px-2 py-1.5 rounded cursor-pointer transition-colors hover:bg-neutral-50"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedAgents.has(agent.id)}
-                                onChange={() => toggleAgent(agent.id)}
-                                className="cursor-pointer"
-                              />
-                              <span className="text-[11px] font-medium" style={{ color: "var(--color-neutral-800)" }}>
-                                {agent.name}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
                       </div>
 
-                      {/* Run button */}
-                      <div className="px-3 pb-2">
-                        <button
-                          onClick={() => {
-                            onRunAgents?.(Array.from(selectedAgents));
-                            setAgentsDropdownOpen(false);
-                          }}
+                      {/* Agent checkboxes */}
+                      <div className="px-2 py-1.5">
+                        {AVAILABLE_AGENTS.map(agent => {
+                          const checked = selectedAgents.has(agent.id);
+                          return (
+                            <label
+                              key={agent.id}
+                              className="flex items-center gap-2.5 px-2 py-1.5 rounded cursor-pointer transition-colors"
+                              style={{ background: "transparent" }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--color-neutral-050)"; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                            >
+                              <div
+                                className="w-4 h-4 flex items-center justify-center rounded shrink-0 border transition-colors"
+                                style={{
+                                  borderColor: checked ? "var(--color-dark-blue-600)" : "var(--color-neutral-300)",
+                                  background: checked ? "var(--color-dark-blue-600)" : "white",
+                                }}
+                              >
+                                {checked && (
+                                  <svg width="8" height="8" viewBox="0 0 10 8" fill="none">
+                                    <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                )}
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleAgent(agent.id)}
+                                className="sr-only"
+                              />
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-medium leading-tight" style={{ color: "var(--color-neutral-800)" }}>
+                                  {agent.name}
+                                </p>
+                                <p className="text-[10px] leading-snug mt-0.5" style={{ color: "var(--color-neutral-500)" }}>
+                                  {agent.description}
+                                </p>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      {/* Run footer */}
+                      <div
+                        className="px-3 py-2.5 flex items-center justify-between"
+                        style={{ borderTop: "1px solid var(--color-neutral-100)", background: "var(--color-neutral-050)" }}
+                      >
+                        <span className="text-[10px]" style={{ color: "var(--color-neutral-500)" }}>
+                          {selectedAgents.size} of {AVAILABLE_AGENTS.length} selected
+                        </span>
+                        <Button
+                          variant="filled"
+                          size="small"
+                          label={`Run ${selectedAgents.size} Agent${selectedAgents.size !== 1 ? "s" : ""}`}
+                          showIconLeading
+                          icon={<Play size={11} />}
                           disabled={selectedAgents.size === 0}
-                          className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded transition-colors"
-                          style={{
-                            background: selectedAgents.size > 0 ? "var(--color-dark-blue-600)" : "var(--color-neutral-200)",
-                            color: selectedAgents.size > 0 ? "white" : "var(--color-neutral-400)",
-                          }}
-                        >
-                          <Play size={10} />
-                          Run {selectedAgents.size} Agent{selectedAgents.size !== 1 ? "s" : ""}
-                        </button>
+                          onClick={() => { onRunAgents?.(Array.from(selectedAgents)); setAgentsDropdownOpen(false); }}
+                        />
                       </div>
 
                       {/* Divider */}
-                      <div style={{ height: 1, background: "var(--color-neutral-100)" }} />
+                      <div style={{ height: 1, background: "var(--color-neutral-200)" }} />
 
-                      {/* Agent Review option */}
-                      <div className="px-3 py-2">
-                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--color-neutral-500)" }}>
+                      {/* Agent Review section */}
+                      <div
+                        className="px-4 py-2"
+                        style={{ background: "var(--color-neutral-050)", borderTop: "1px solid var(--color-neutral-100)" }}
+                      >
+                        <p
+                          className="text-[9px] font-bold uppercase tracking-widest mb-1.5"
+                          style={{ color: "var(--color-neutral-500)" }}
+                        >
                           Review
                         </p>
                         <button
-                          onClick={() => {
-                            setAgentsDropdownOpen(false);
-                            runAgentReview();
-                          }}
+                          onClick={() => { setAgentsDropdownOpen(false); runAgentReview(); }}
                           disabled={agentRunning}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-colors hover:bg-neutral-50"
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-colors"
+                          style={{ background: "transparent" }}
+                          onMouseEnter={e => { if (!agentRunning) (e.currentTarget as HTMLElement).style.background = "var(--color-neutral-100)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                         >
-                          {agentRunning
-                            ? <Loader2 size={12} className="animate-spin shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />
-                            : <Bot size={12} className="shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />}
-                          <span className="text-[11px] font-semibold" style={{ color: "var(--color-neutral-800)" }}>
-                            {agentRunning ? "Running review…" : "Agent Review"}
-                          </span>
+                          <div
+                            className="w-5 h-5 rounded flex items-center justify-center shrink-0"
+                            style={{ background: "var(--color-dark-blue-000)", border: "1px solid var(--color-dark-blue-100)" }}
+                          >
+                            {agentRunning
+                              ? <Loader2 size={10} className="animate-spin" style={{ color: "var(--color-dark-blue-600)" }} />
+                              : <Bot size={10} style={{ color: "var(--color-dark-blue-600)" }} />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-semibold" style={{ color: agentRunning ? "var(--color-neutral-400)" : "var(--color-neutral-800)" }}>
+                              {agentRunning ? "Running review…" : "Agent Review"}
+                            </p>
+                            <p className="text-[10px]" style={{ color: "var(--color-neutral-500)" }}>
+                              Review analyst decisions against agent analysis
+                            </p>
+                          </div>
                         </button>
                       </div>
                     </div>

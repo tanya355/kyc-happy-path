@@ -234,78 +234,224 @@ interface ResolutionSectionProps {
 
 // ── Inline streaming agent steps ──────────────────────────────────────
 
-const INLINE_STEPS = [
-  "Loading exception context and selected action…",
-  "Cross-referencing source documents for consistency…",
-  "Evaluating impact across affected entities…",
-  "Finalising post-action reasoning…",
-];
+// ── Per-agent mini-pipeline ───────────────────────────────────────────
 
-function InlineAgentSteps() {
-  const [revealed, setRevealed] = useState<string[]>([]);
+interface MiniAgent {
+  name: string;
+  steps: string[];
+}
+
+function buildAgents(action: SuggestedAction, data: ExceptionData): MiniAgent[] {
+  const docList = data.evidence.map(e => `${e.name}${e.page ? ` (${e.page})` : ""}`);
+  const docStr  = docList.length > 0 ? docList.join(", ") : "available source records";
+  const affected = (action.affectedRecords ?? []).map(r => `${r.entity} · ${r.attribute}`);
+
+  return [
+    {
+      name: "Context Agent",
+      steps: [
+        `Loading exception: "${data.summary.slice(0, 60)}${data.summary.length > 60 ? "…" : ""}"`,
+        `Selected action: "${action.label.slice(0, 55)}${action.label.length > 55 ? "…" : ""}"`,
+        `Confidence baseline: ${data.confidence}% — ${data.confidence >= 90 ? "high confidence, standard review" : data.confidence >= 75 ? "moderate confidence, careful review needed" : "lower confidence, extended checks required"}`,
+      ],
+    },
+    {
+      name: "Document Verifier",
+      steps: [
+        `Locating evidence: ${docStr}`,
+        ...(docList.length > 1
+          ? [`Cross-referencing ${docList[0]} against ${docList[1]}`]
+          : [`Reviewing ${docStr} for attribute consistency`]),
+        "Verifying document currency and source authority — no conflicts detected",
+      ],
+    },
+    {
+      name: "Entity Impact Agent",
+      steps: [
+        `Scanning DRG structure: BlackRock DRG Group (3 entities)`,
+        ...(affected.length > 0
+          ? [`Attributes affected: ${affected.slice(0, 2).join("; ")}${affected.length > 2 ? ` +${affected.length - 2} more` : ""}`]
+          : ["No record modifications required for this action"]),
+        action.isResolution
+          ? "Impact scoped — exception closure confirmed, no downstream flags"
+          : "Outreach item queued — flagged for reviewer approval before sending",
+      ],
+    },
+    {
+      name: "Risk Assessment Agent",
+      steps: [
+        `Evaluating action against KYC policy thresholds`,
+        `FATF / CDD alignment check — ${action.isResolution ? "resolution pathway confirmed" : "outreach pathway required"}`,
+        `Final assessment: ${action.rationale.slice(0, 70)}${action.rationale.length > 70 ? "…" : ""}`,
+      ],
+    },
+  ];
+}
+
+type AgentPhase = "pending" | "running" | "done";
+
+function InlineAgentSteps({ action, data }: { action: SuggestedAction; data: ExceptionData }) {
+  const agents = buildAgents(action, data);
+
+  // Flat list of all steps: [agentIdx, stepIdx, text]
+  const allSteps = agents.flatMap((ag, ai) => ag.steps.map((s, si) => ({ ai, si, text: s })));
+
+  const [agentPhases, setAgentPhases] = useState<AgentPhase[]>(
+    agents.map((_, i) => (i === 0 ? "running" : "pending"))
+  );
+  const [revealedByAgent, setRevealedByAgent] = useState<number[]>(agents.map(() => 0));
+  const [globalStep, setGlobalStep] = useState(0);
   const [typing, setTyping] = useState("");
-  const stepRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
+
     const typeStep = (text: string, cb: () => void) => {
       let i = 0;
       const tick = () => {
         if (cancelled) return;
         i++;
         setTyping(text.slice(0, i));
-        if (i < text.length) setTimeout(tick, 22);
-        else setTimeout(cb, 280);
+        if (i < text.length) setTimeout(tick, 16);
+        else setTimeout(cb, 220);
       };
-      setTimeout(tick, 60);
+      setTimeout(tick, 40);
     };
 
-    const advance = () => {
-      if (cancelled) return;
-      const step = INLINE_STEPS[stepRef.current];
-      if (!step) return;
-      typeStep(step, () => {
+    const advance = (stepIdx: number) => {
+      if (cancelled || stepIdx >= allSteps.length) return;
+      const { ai, si, text } = allSteps[stepIdx];
+
+      // Mark this agent as running
+      setAgentPhases(prev => {
+        const next = [...prev];
+        if (next[ai] === "pending") next[ai] = "running";
+        return next;
+      });
+
+      typeStep(text, () => {
         if (cancelled) return;
-        setRevealed(prev => [...prev, step]);
         setTyping("");
-        stepRef.current += 1;
-        if (stepRef.current < INLINE_STEPS.length) setTimeout(advance, 200);
+        // Commit step
+        setRevealedByAgent(prev => {
+          const next = [...prev];
+          next[ai] = si + 1;
+          return next;
+        });
+        const isLastStepOfAgent = si === agents[ai].steps.length - 1;
+        if (isLastStepOfAgent) {
+          setAgentPhases(prev => {
+            const next = [...prev];
+            next[ai] = "done";
+            if (ai + 1 < next.length) next[ai + 1] = "running";
+            return next;
+          });
+        }
+        setGlobalStep(stepIdx + 1);
+        setTimeout(() => advance(stepIdx + 1), isLastStepOfAgent ? 320 : 160);
       });
     };
-    advance();
+
+    advance(0);
     return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const currentStep = allSteps[globalStep];
 
   return (
     <div
-      className="border-t px-4 py-4 space-y-2.5"
-      style={{ borderColor: "var(--color-neutral-200)", background: "var(--color-neutral-050)" }}
+      className="border-t"
+      style={{ borderColor: "var(--color-dark-blue-100)", background: "var(--color-neutral-050)" }}
     >
-      <div className="flex items-center gap-2 mb-1">
-        <Loader2 size={12} className="animate-spin shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />
+      {/* Header */}
+      <div
+        className="flex items-center gap-2 px-4 py-2.5"
+        style={{ borderBottom: "1px solid var(--color-neutral-100)" }}
+      >
+        <Loader2 size={11} className="animate-spin shrink-0" style={{ color: "var(--color-dark-blue-600)" }} />
         <p className="text-[11px] font-bold" style={{ color: "var(--color-dark-blue-700)" }}>
-          Agent re-running analysis
+          Agent Analysis Running
         </p>
+        <span className="ml-auto text-[10px]" style={{ color: "var(--color-neutral-400)" }}>
+          {Math.min(globalStep, allSteps.length)}/{allSteps.length} steps
+        </span>
       </div>
-      <div className="space-y-1.5 ml-5">
-        {revealed.map((s, i) => (
-          <div key={i} className="flex items-start gap-1.5">
-            <CheckCircle2 size={10} className="shrink-0 mt-0.5" style={{ color: "var(--color-green-600)" }} />
-            <p className="text-[10.5px] leading-snug" style={{ color: "var(--color-neutral-600)" }}>{s}</p>
-          </div>
-        ))}
-        {typing && (
-          <div className="flex items-start gap-1.5">
-            <Clock size={10} className="shrink-0 mt-0.5" style={{ color: "var(--color-dark-blue-400)" }} />
-            <p className="text-[10.5px] leading-snug" style={{ color: "var(--color-dark-blue-700)" }}>
-              {typing}
-              <span
-                className="inline-block w-[1.5px] h-[10px] ml-0.5 align-text-bottom animate-pulse"
-                style={{ background: "var(--color-dark-blue-600)" }}
-              />
-            </p>
-          </div>
-        )}
+
+      {/* Agent list */}
+      <div className="px-4 py-3 space-y-3">
+        {agents.map((agent, ai) => {
+          const phase = agentPhases[ai];
+          const revealed = revealedByAgent[ai];
+          const isTypingHere = currentStep?.ai === ai && phase === "running";
+
+          return (
+            <div key={ai}>
+              {/* Agent header row */}
+              <div className="flex items-center gap-2 mb-1.5">
+                {phase === "done" ? (
+                  <CheckCircle2 size={11} className="shrink-0" style={{ color: "var(--color-green-600)" }} />
+                ) : phase === "running" ? (
+                  <Loader2 size={11} className="animate-spin shrink-0" style={{ color: "var(--color-dark-blue-500)" }} />
+                ) : (
+                  <Clock size={11} className="shrink-0" style={{ color: "var(--color-neutral-300)" }} />
+                )}
+                <span
+                  className="text-[10.5px] font-bold"
+                  style={{
+                    color: phase === "done"
+                      ? "var(--color-green-700)"
+                      : phase === "running"
+                      ? "var(--color-dark-blue-700)"
+                      : "var(--color-neutral-400)",
+                  }}
+                >
+                  {agent.name}
+                </span>
+                {phase === "done" && (
+                  <span
+                    className="ml-auto text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    style={{ background: "var(--color-green-100)", color: "var(--color-green-700)" }}
+                  >
+                    Done
+                  </span>
+                )}
+                {phase === "running" && (
+                  <span
+                    className="ml-auto text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    style={{ background: "var(--color-dark-blue-600)", color: "#fff" }}
+                  >
+                    Running
+                  </span>
+                )}
+              </div>
+
+              {/* Steps */}
+              {(phase === "running" || phase === "done") && (
+                <div className="ml-5 space-y-1">
+                  {agent.steps.slice(0, revealed).map((step, si) => (
+                    <div key={si} className="flex items-start gap-1.5">
+                      <span className="shrink-0 mt-[3px] text-[9px]" style={{ color: "var(--color-neutral-400)" }}>›</span>
+                      <p className="text-[10.5px] leading-snug" style={{ color: "var(--color-neutral-600)" }}>{step}</p>
+                    </div>
+                  ))}
+                  {isTypingHere && typing && (
+                    <div className="flex items-start gap-1.5">
+                      <span className="shrink-0 mt-[3px] text-[9px]" style={{ color: "var(--color-dark-blue-400)" }}>›</span>
+                      <p className="text-[10.5px] leading-snug" style={{ color: "var(--color-dark-blue-700)" }}>
+                        {typing}
+                        <span
+                          className="inline-block w-[1.5px] h-[10px] ml-0.5 align-text-bottom animate-pulse"
+                          style={{ background: "var(--color-dark-blue-600)" }}
+                        />
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -329,6 +475,7 @@ function LoadingDots() {
 
 interface ActionExpansionProps {
   action: SuggestedAction;
+  data: ExceptionData;
   phase: RerunPhase;
   feedback: "up" | "down" | null;
   onRerun: () => void;
@@ -336,13 +483,13 @@ interface ActionExpansionProps {
   onOpenReachOuts?: () => void;
 }
 
-function ActionExpansion({ action, phase, feedback, onRerun, onFeedback, onOpenReachOuts }: ActionExpansionProps) {
+function ActionExpansion({ action, data, phase, feedback, onRerun, onFeedback, onOpenReachOuts }: ActionExpansionProps) {
   const isReachOut = !action.isResolution;
   const hasRecords = (action.affectedRecords ?? []).length > 0;
 
   // ── Loading state ──────────────────────────────────────────────────
   if (phase === "loading") {
-    return <InlineAgentSteps />;
+    return <InlineAgentSteps action={action} data={data} />;
   }
 
   // ── Done state ─────────────────────────────────────────────────────
@@ -636,6 +783,7 @@ function ResolutionSection({
                   {showExpansion && (
                     <ActionExpansion
                       action={action}
+                      data={data}
                       phase={phase}
                       feedback={feedback}
                       onRerun={() => onRerun(action.value)}

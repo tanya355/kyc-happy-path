@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { X, Maximize2, ExternalLink } from "lucide-react";
+import { X, Maximize2, ChevronLeft, ExternalLink } from "lucide-react";
 import { TopNav } from "@/components/kyc/TopNav";
 import { StaticWisps } from "@/components/kyc/StaticWisps";
 import { CaseHeader, CaseStatusBar, ENTITY_META } from "@/components/kyc/CaseHeader";
@@ -61,10 +61,14 @@ export default function Index() {
   const [agentWindowOpen, setAgentWindowOpen] = useState(false);
   const [agentPanelOpen, setAgentPanelOpen] = useState(false);
   const [agentPanelCollapsed, setAgentPanelCollapsed] = useState(false);
+  const [rightPanelOpen, setRightPanelOpen] = useState(false);
 
   const handleAttrSelect = (attr: AttrRow | null) => {
     setSelectedAttr(attr);
-    if (attr) setRightTab("reasoning");
+    if (attr) {
+      setRightTab("reasoning");
+      setRightPanelOpen(true);
+    }
   };
   const [resolvedExceptions, setResolvedExceptions] = useState<Set<number>>(new Set());
 
@@ -285,6 +289,7 @@ export default function Index() {
                 setActiveDocName(name);
                 setRightTab("document");
                 setRightW(Math.round(window.innerWidth * 0.45));
+                setRightPanelOpen(true);
                 addAuditEntry({
                   id: `doc-${name}-${Date.now()}`,
                   timestamp: new Date(),
@@ -295,14 +300,39 @@ export default function Index() {
             />
           </div>
 
-          {/* Drag handle */}
-          <div
-            onMouseDown={onDragStart}
-            className="hidden lg:flex shrink-0 w-1 cursor-col-resize bg-kyc-neutral-200 hover:bg-kyc-neutral-300 transition-colors"
-            title="Drag to resize"
-          />
+          {/* Collapsed strip – shown when right panel is hidden */}
+          {!rightPanelOpen && (
+            <div
+              className="hidden lg:flex shrink-0 flex-col items-center border-l"
+              style={{ width: 32, background: "white", borderColor: "var(--color-neutral-200)" }}
+            >
+              <button
+                onClick={() => setRightPanelOpen(true)}
+                className="mt-3 w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-kyc-neutral-100"
+                title="Expand attributes panel"
+              >
+                <ChevronLeft size={13} style={{ color: "var(--color-neutral-500)" }} />
+              </button>
+              <span
+                className="mt-3 text-[9px] font-bold uppercase tracking-widest select-none"
+                style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", color: "var(--color-neutral-500)" }}
+              >
+                Attributes
+              </span>
+            </div>
+          )}
+
+          {/* Drag handle – only when panel is open */}
+          {rightPanelOpen && (
+            <div
+              onMouseDown={onDragStart}
+              className="hidden lg:flex shrink-0 w-1 cursor-col-resize bg-kyc-neutral-200 hover:bg-kyc-neutral-300 transition-colors"
+              title="Drag to resize"
+            />
+          )}
 
           {/* Right – tabbed panel (resizable) */}
+          {rightPanelOpen && (
           <div
             className="hidden lg:flex shrink-0 flex-col"
             style={{ width: rightW, minHeight: 0, maxHeight: "100%", transition: "width 250ms ease" }}
@@ -328,7 +358,7 @@ export default function Index() {
                 Attributes
               </button>
               <button
-                onClick={() => { setRightTab("document"); setRightW(Math.round(window.innerWidth * 0.45)); }}
+                onClick={() => { setRightTab("document"); setRightW(Math.round(window.innerWidth * 0.45)); setRightPanelOpen(true); }}
                 className={`flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold border-b-2 transition-colors ${
                   rightTab === "document"
                     ? "border-ds-dark-blue-500 text-ds-dark-blue-600"
@@ -363,12 +393,21 @@ export default function Index() {
               {rightTab === "document" && (
                 <button
                   onClick={() => setDocExpanded(true)}
-                  className="ml-auto self-center mr-2 p-1 rounded text-kyc-neutral-600 hover:text-ds-dark-blue-600 hover:bg-ds-dark-blue-000 transition-colors"
+                  className="self-center p-1 rounded text-kyc-neutral-600 hover:text-ds-dark-blue-600 hover:bg-ds-dark-blue-000 transition-colors"
                   title="Expand document"
                 >
                   <Maximize2 size={13} />
                 </button>
               )}
+              <button
+                onClick={() => setRightPanelOpen(false)}
+                className="ml-auto self-center mr-2 p-1 rounded text-kyc-neutral-400 hover:text-kyc-neutral-700 hover:bg-kyc-neutral-100 transition-colors"
+                title="Collapse panel"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 17l5-5-5-5"/><path d="M6 17l5-5-5-5"/>
+                </svg>
+              </button>
             </div>
 
             {/* Tab content */}
@@ -402,6 +441,7 @@ export default function Index() {
               )}
             </div>
           </div>
+          )}
 
           {/* Agent Review Panel – collapsible 4th column */}
           {agentPanelOpen && (
