@@ -2,15 +2,28 @@
 
 A production-ready full-stack React application template with integrated Express server, featuring React Router 6 SPA mode, TypeScript, Vitest, Zod and modern tooling.
 
-While the starter comes with a express server, only create endpoint when strictly neccesary, for example to encapsulate logic that must leave in the server, such as private keys handling, or certain DB operations, db...
+While the starter comes with a express server, only create endpoint when strictly neccesary, for example to encapsulate logic that must leave in the server, such as private keys handling, or certain DB operations.
 
 ## Tech Stack
 
 - **PNPM**: Prefer pnpm
-- **Frontend**: React 19.2.5 + React Router v7 (spa) + TypeScript + Vite + TailwindCSS 3
+- **UI Framework**: React 19 + TypeScript
+- **Routing**: React Router v7
+- **Server State**: TanStack Query v5 (`@tanstack/react-query`)
+- **Data Tables**: TanStack Table v8 (`@tanstack/react-table`)
+- **Client UI State**: Zustand v5
+- **Styling**: Tailwind CSS v4
+- **Design System**: `@kpmg-us/ad-design-lib` 0.0.25
+- **UI Primitives**: Radix UI primitives (`radix-ui`, 1.4.3)
+- **Icons**: Lucide React (1.8.0)
+- **Component Variants**: `class-variance-authority` (latest)
+- **Class Composition**: `clsx` + `tailwind-merge` (0.7.1)
+- **Schema Validation**: Zod (4.3.6)
+- **Forms**: `react-hook-form` + `@hookform/resolvers` (7.72.1)
+- **Charts**: Recharts (3.8.1)
+- **Toast Notifications**: Sonner (2.0.7)
 - **Backend**: Express server integrated with Vite dev server
 - **Testing**: Vitest
-- **UI**: Radix UI + TailwindCSS 3 + Lucide React icons
 
 ## Project Structure
 
@@ -33,22 +46,36 @@ shared/                   # Types used by both client & server
 
 ## SPA Routing System
 
-The routing system is powered by React Router 6:
+The routing system is powered by React Router v7:
 
-- `client/pages/Index.tsx` represents the home page.
-- Routes are defined in `client/App.tsx` using the `react-router-dom` import
-- Route files are located in the `client/pages/` directory
+- Route page components live in `client/pages/` (e.g., `Index.tsx` for the home page).
+- Routes are defined in `client/AppRoot.tsx` using `<BrowserRouter>`, `<Routes>`, and `<Route>`.
+- Import all router APIs from `react-router` (not `react-router-dom`).
+- Use `useNavigate`, `useParams`, `useLocation`, and `Link` from `react-router` for navigation and routing helpers.
 
-For example, routes can be defined with:
+**Example usage:**
 
-```typescript
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+```tsx
+import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router";
 
-<Routes>
-  <Route path="/" element={<Index />} />
-  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-  <Route path="*" element={<NotFound />} />
-</Routes>;
+<BrowserRouter>
+  <Routes>
+    <Route path="/" element={<Index />} />
+    {/* Add all custom routes above the catch-all "*" route */}
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+</BrowserRouter>
+```
+
+See also:
+
+- Route files: `client/pages/`
+- Router setup: `client/AppRoot.tsx`
+
+Use navigation helpers as needed:
+
+```tsx
+import { useNavigate, useParams, useLocation, Link } from "react-router";
 ```
 
 ### Styling System
@@ -118,7 +145,7 @@ export interface MyRouteResponse {
 }
 ```
 
-1. Create a new route handler in `server/routes/my-route.ts`:
+2. Create a new route handler in `server/routes/my-route.ts`:
 
 ```typescript
 import { RequestHandler } from "express";
@@ -132,7 +159,7 @@ export const handleMyRoute: RequestHandler = (req, res) => {
 };
 ```
 
-1. Register the route in `server/index.ts`:
+3. Register the route in `server/index.ts`:
 
 ```typescript
 import { handleMyRoute } from "./routes/my-route";
@@ -141,7 +168,7 @@ import { handleMyRoute } from "./routes/my-route";
 app.get("/api/my-endpoint", handleMyRoute);
 ```
 
-1. Use in React components with type safety:
+4. Use in React components with type safety:
 
 ```typescript
 import { MyRouteResponse } from '@shared/api'; // Optional: for type safety
