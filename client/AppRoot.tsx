@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QaHelpAgent } from "@/components/kyc/QaHelpAgent";
+import { AgentRunPanel } from "@/components/kyc/AgentRunPanel";
 import Launch from "./pages/Launch";
 import Home from "./pages/Home";
 import Index from "./pages/Index";
@@ -40,6 +41,7 @@ export function AppRoot() {
           </Routes>
         </BrowserRouter>
         <QaHelpAgent />
+        <AgentRunPanel />
       </TooltipProvider>
     </QueryClientProvider>
   );

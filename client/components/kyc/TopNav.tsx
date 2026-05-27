@@ -40,6 +40,7 @@ export function TopNav() {
 
   const runSelected = () => {
     if (selectedIds.has("agent-review")) window.dispatchEvent(new CustomEvent("kyc-run-agent-review"));
+    window.dispatchEvent(new CustomEvent("kyc-agents-start", { detail: Array.from(selectedIds) }));
     setRanAgents(new Set(selectedIds));
     setAgentDropOpen(false);
     setTimeout(() => setRanAgents(new Set()), 3000);
