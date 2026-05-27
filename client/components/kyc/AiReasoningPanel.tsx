@@ -1,10 +1,9 @@
 import { useState, useRef } from "react";
 import {
   CheckCircle2, Sparkles, Send,
-  ExternalLink, FileText, AlertTriangle, BookOpen,
+  FileText, AlertTriangle, BookOpen,
   ArrowRight, Database, RotateCcw, ThumbsUp, ThumbsDown, Loader2,
 } from "lucide-react";
-import { Button } from "@kpmg-us/ad-design-lib";
 import { exceptions, type Exception } from "./ExceptionsPanel";
 import { Building2 } from "lucide-react";
 
@@ -182,34 +181,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function EvidenceSection({ docs }: { docs: EvidenceDoc[] }) {
-  if (docs.length === 0) {
-    return (
-      <div className="text-[12px] text-kyc-neutral-600 italic py-2">
-        No source documents linked to this exception.
-      </div>
-    );
-  }
-  return (
-    <div className="divide-y divide-kyc-neutral-100 border border-kyc-neutral-200">
-      {docs.map((doc, i) => (
-        <div key={i} className="flex items-center gap-3 px-3 py-2.5 bg-white hover:bg-kyc-neutral-50 transition-colors">
-          <FileText size={13} className="text-kyc-neutral-600 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-semibold text-kyc-neutral-800">{doc.name}</p>
-            <p className="text-[11px] text-kyc-neutral-600 mt-0.5">
-              {doc.type}{doc.page ? ` · ${doc.page}` : ""}
-            </p>
-          </div>
-          <button className="flex items-center gap-1 text-[11px] font-semibold text-ds-dark-blue-600 hover:underline shrink-0">
-            <ExternalLink size={10} /> View Evidence
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 type Resolution = "accepted" | "rejected" | "standardized" | string;
 
 /** Per-action async phase for the post-action expansion */
@@ -257,8 +228,7 @@ interface ActionExpansionProps {
   onOpenReachOuts?: () => void;
 }
 
-function ActionExpansion({ action, phase, feedback, onRerun, onFeedback, onOpenReachOuts }: ActionExpansionProps) {
-  const isReachOut = !action.isResolution;
+function ActionExpansion({ action, phase, feedback, onRerun, onFeedback }: ActionExpansionProps) {
   const hasRecords = (action.affectedRecords ?? []).length > 0;
 
   // ── Loading state ──────────────────────────────────────────────────
@@ -489,7 +459,7 @@ function ActionExpansion({ action, phase, feedback, onRerun, onFeedback, onOpenR
 
 function ResolutionSection({
   data, resolution, customNote, rerunPhases, feedbackMap,
-  onSelectAction, onRerun, onFeedback, onCustomNote, onSubmit, onUndo, onOpenReachOuts,
+  onSelectAction, onRerun, onFeedback, onCustomNote, onSubmit, onOpenReachOuts,
 }: ResolutionSectionProps) {
   return (
     <div>

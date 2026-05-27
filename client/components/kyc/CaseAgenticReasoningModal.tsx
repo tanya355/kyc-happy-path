@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
   X, Bot, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp,
-  Sparkles, ShieldAlert, Building2, FileSearch, TrendingUp, Users,
-  ArrowRight, Info,
+  Sparkles, Building2,
+  Info,
 } from "lucide-react";
 import { Button } from "@kpmg-us/ad-design-lib";
 

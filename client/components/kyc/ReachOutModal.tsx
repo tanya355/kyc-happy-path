@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  X, Mail, Send, CheckCircle2, AlertTriangle, Clock,
-  FileText, Building2, Edit3, ChevronDown, ChevronUp, Copy, Check,
+  X, Mail, Send, CheckCircle2, Clock,
+  Building2, Edit3, Copy, Check,
 } from "lucide-react";
 import { Button } from "@kpmg-us/ad-design-lib";
 

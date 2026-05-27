@@ -476,29 +476,6 @@ function ComplianceRow({ pep, sanctions }: { pep: PepStatus; sanctions: SanctSta
 /*  Atom: ownership bar                                                 */
 /* ------------------------------------------------------------------ */
 
-function OwnershipBar({ pct, confidence }: { pct: number | null; confidence: number }) {
-  const barColor =
-    pct === null     ? "var(--color-neutral-300)" :
-    confidence >= 60 ? "var(--color-green-500)"   :
-    confidence >= 40 ? "var(--color-yellow-500)"  : "var(--color-red-700)";
-  const textColor =
-    pct === null     ? "var(--color-neutral-400)" :
-    confidence >= 60 ? "var(--color-green-700)"   :
-    confidence >= 40 ? "var(--color-neutral-800)" : "var(--color-red-700)";
-  const pctWidth = pct !== null ? `${Math.min(pct * 2.5, 100)}%` : "12%";
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-24 h-1.5 rounded-full overflow-hidden shrink-0" style={{ background: "var(--color-neutral-200)" }}>
-        <div className="h-full rounded-full" style={{ width: pctWidth, background: barColor }} />
-      </div>
-      <span className="text-[11px] font-bold w-8 shrink-0" style={{ color: textColor }}>
-        {pct !== null ? `${pct}%` : "—"}
-      </span>
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /*  Owner row item                                                      */
 /* ------------------------------------------------------------------ */
@@ -644,7 +621,6 @@ function SummaryStrip({ rows }: { rows: EnhancedOwnerRow[] }) {
       style={{
         background: "var(--color-neutral-000)",
         borderBottom: "1px solid var(--color-neutral-200)",
-        divideColor: "var(--color-neutral-200)",
       }}
     >
 
