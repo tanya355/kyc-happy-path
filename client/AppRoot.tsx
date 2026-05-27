@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import { QaHelpAgent } from "@/components/kyc/QaHelpAgent";
 import Launch from "./pages/Launch";
 import Home from "./pages/Home";
-import Index from "./pages/Index";
+import Index from "./pages/CaseWorkspace";
 import Reports from "./pages/Reports";
 import EvidenceLocker from "./pages/EvidenceLocker";
 import QaDashboard from "./pages/QaDashboard";
