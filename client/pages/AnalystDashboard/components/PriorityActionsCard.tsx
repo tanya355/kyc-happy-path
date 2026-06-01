@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { ChevronRight, ExternalLink, ShieldAlert } from "lucide-react";
 import type { ActionDetail, AiPriorityAction } from "../AnalystDashboardData";
 

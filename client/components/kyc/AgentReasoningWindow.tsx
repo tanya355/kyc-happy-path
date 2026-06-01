@@ -186,7 +186,7 @@ export function AgentReasoningWindow({ onClose }: AgentReasoningWindowProps) {
   if (minimised) {
     return (
       <div
-        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[500] flex items-center gap-2.5 px-4 py-2 rounded-full shadow-lg cursor-pointer"
+        className="fixed bottom-4 right-6 z-[500] flex items-center gap-2.5 px-4 py-2 rounded-full shadow-lg cursor-pointer"
         style={{
           background: finished ? "var(--color-green-700)" : "var(--color-dark-blue-700)",
           border: "1px solid rgba(255,255,255,0.15)",
@@ -212,7 +212,7 @@ export function AgentReasoningWindow({ onClose }: AgentReasoningWindowProps) {
   // ── Full panel ──────────────────────────────────────────────────
   return (
     <div
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[500] flex flex-col shadow-2xl"
+      className="fixed bottom-4 right-6 z-[500] flex flex-col shadow-2xl"
       style={{
         width: 400,
         maxHeight: 480,

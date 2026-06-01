@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Send, CheckCircle2, X, Check, AlertOctagon, XCircle, Info, AlertTriangle, Bot, Loader2, ChevronDown, ChevronUp, ClipboardList, Mail } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@kpmg-us/ad-design-lib";
 import { DrgModal } from "./DrgModal";
@@ -56,6 +56,8 @@ interface CaseHeaderProps {
   onSubmitComplete?: () => void;
   reachOutCount?: number;
   onOpenReachOuts?: () => void;
+  onAgentReviewReady?: () => void;
+  onRunAgents?: () => void;
 }
 
 type SubmitPhase = "confirm" | "processing" | "complete";
@@ -885,6 +887,12 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
   const [showCaseReasoning, setShowCaseReasoning] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const handler = () => runAgentReview();
+    window.addEventListener("kyc-run-agent-review", handler);
+    return () => window.removeEventListener("kyc-run-agent-review", handler);
+  }, [agentRunning]);
+
   const runAgentReview = () => {
     if (agentRunning) return;
     setAgentRunning(true);
@@ -1031,13 +1039,6 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
             <div className="shrink-0 self-center flex items-center gap-3">
               {/* Secondary actions */}
               <div className="flex items-center gap-1">
-                <Button
-                  variant="text"
-                  size="small"
-                  label="Cancel"
-                  icon={<XCircle size={13} />}
-                  onClick={() => navigate("/dashboard")}
-                />
                 {onOpenAuditLog && (
                   <Button
                     variant="text"
@@ -1077,11 +1078,9 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
                 <Button
                   variant="outlined"
                   size="small"
-                  label={agentRunning ? "Running…" : "Agent Review"}
-                  icon={agentRunning ? <Loader2 size={12} className="animate-spin" aria-hidden /> : <Bot size={12} aria-hidden />}
-                  disabled={agentRunning}
-                  onClick={runAgentReview}
-                  aria-label="Run agent review of analyst work"
+                  label="Cancel"
+                  icon={<XCircle size={13} />}
+                  onClick={() => navigate("/dashboard")}
                 />
                 <Button
                   variant="outlined"
@@ -1101,7 +1100,7 @@ export function CaseHeader({ resolvedCount, totalExceptions, focusedEntity, onAu
                   disabled={resolvedCount === 0 && !agentReviewComplete}
                   onClick={() => setShowConfirm(true)}
                 />
-              </div> {/* end primary actions */}
+              </div>
             </div> {/* end actions wrapper */}
 
           </div>

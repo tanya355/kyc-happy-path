@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { ArrowRight, Shield, ClipboardCheck } from "lucide-react";
 import type { PersonaIconKey, PersonaSeed } from "../LaunchData";
 

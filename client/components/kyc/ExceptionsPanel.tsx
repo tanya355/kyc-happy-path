@@ -13,6 +13,7 @@ export interface Exception {
   body: string;
   confidence: number;
   type: "discrepancy" | "missing-doc" | "validation";
+  derivation: "agent" | "system" | "manual";
 }
 
 export const exceptions: Exception[] = [
@@ -23,6 +24,7 @@ export const exceptions: Exception[] = [
     body: "Minor title difference found for Authorized Signatory 'Sarah Williams' across two entities.",
     confidence: 90,
     type: "discrepancy",
+    derivation: "agent",
   },
   {
     entity: "BlackRock Institutional",
@@ -31,6 +33,7 @@ export const exceptions: Exception[] = [
     body: "Minor title difference found for Authorized Signatory 'Sarah Williams' across two entities.",
     confidence: 95,
     type: "discrepancy",
+    derivation: "agent",
   },
   {
     entity: "BlackRock Institutional",
@@ -39,6 +42,7 @@ export const exceptions: Exception[] = [
     body: "The updated Offering Memorandum for this fund is required for full validation.",
     confidence: 75,
     type: "missing-doc",
+    derivation: "system",
   },
   {
     entity: "BlackRock Institutional",
@@ -47,6 +51,7 @@ export const exceptions: Exception[] = [
     body: "Lorem Ipsum dolor sit amet, consectetur adipiscing elit.",
     confidence: 75,
     type: "validation",
+    derivation: "agent",
   },
   {
     entity: "Entity 13",
@@ -55,6 +60,7 @@ export const exceptions: Exception[] = [
     body: "Lorem Ipsum dolor sit amet, consectetur adipiscing elit.",
     confidence: 99,
     type: "validation",
+    derivation: "agent",
   },
 ];
 
@@ -123,10 +129,10 @@ export function ExceptionsPanel({ activeIdx, onSelect, addressedIdxs = new Set()
                       }`}>
                         {ex.title}
                       </span>
-                      {!isAddressed && (
+                      {!isAddressed && ex.derivation === "agent" && (
                         <span className={`inline-flex items-center px-1.5 py-0 rounded-full text-[11px] font-medium border shrink-0 ${
-                          ex.confidence >= 90 ? "bg-ds-green-000 text-ds-green-700 border-ds-green-100"
-                            : ex.confidence >= 75 ? "bg-ds-yellow-000 text-ds-neutral-700 border-ds-yellow-300"
+                          ex.confidence >= 95 ? "bg-ds-green-000 text-ds-green-700 border-ds-green-100"
+                            : ex.confidence >= 80 ? "bg-ds-yellow-000 text-ds-neutral-700 border-ds-yellow-300"
                             : "bg-ds-red-000 text-ds-red-700 border-ds-red-200"
                         }`}>
                           {ex.confidence}%
