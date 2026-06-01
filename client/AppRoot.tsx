@@ -39,9 +39,9 @@ export function AppRoot() {
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <QaHelpAgent />
+          <AgentRunPanel />
         </BrowserRouter>
-        <QaHelpAgent />
-        <AgentRunPanel />
       </TooltipProvider>
     </QueryClientProvider>
   );
